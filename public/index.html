@@ -68,6 +68,10 @@
       <span>☁️ 8. Floci Cloud Simulation</span>
       <span class="tab-badge" style="background: #10b981; color: #fff;">Local AWS</span>
     </button>
+    <button class="tab-btn" data-tab="tab-config" id="nav-tab-config" role="tab" style="background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.4);">
+      <span>⚙️ 9. Dynamic Config</span>
+      <span class="tab-badge" style="background: #ec4899; color: #fff;">Hot Mutation</span>
+    </button>
   </nav>
 
   <!-- Main Work Area -->
@@ -1028,6 +1032,45 @@
         </div>
       </div>
 
+      <!-- Real-Time Collaborative Team Development Card -->
+      <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border-color: rgba(99, 102, 241, 0.4);">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div class="card-title">
+              <span>👥 Agile Team & Multi-Agent Collaboration Engine</span>
+              <span class="system-tag" style="background:rgba(99, 102, 241, 0.2); color:#818cf8; border:1px solid #818cf8;">LIVE SIMULATION</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+              Simulating a 5-member engineering team + AI coding agent generating realistic, concurrent cloud traffic.
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button id="team-sprint-burst-btn" class="btn btn-primary" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); font-size:12px;">
+              ⚡ Trigger Sprint Burst (5 Concurrent Ops)
+            </button>
+            <button id="team-sim-toggle-btn" class="btn btn-primary" style="background:#10b981; font-size:12px;">
+              ⏸ Pause Team Simulation
+            </button>
+          </div>
+        </div>
+
+        <!-- Team Personas Pills -->
+        <div style="margin: 0.75rem 0; display:flex; flex-wrap:wrap; gap:8px;" id="team-members-pills">
+          <!-- Populated dynamically by FlociCloudClient -->
+        </div>
+
+        <!-- Live Activity Stream Ticker -->
+        <div style="margin-top:0.75rem; background:rgba(0,0,0,0.35); border:1px solid var(--border-color); border-radius:var(--radius-md); overflow:hidden;">
+          <div style="padding:6px 12px; background:rgba(255,255,255,0.03); border-bottom:1px solid var(--border-color); font-size:11px; font-weight:600; color:var(--text-secondary); display:flex; justify-content:space-between;">
+            <span>🔴 REAL-TIME COLLABORATIVE STREAM</span>
+            <span>AUTOPLAY (EVERY ~4S)</span>
+          </div>
+          <div id="team-activity-ticker" style="max-height:160px; overflow-y:auto;">
+            <div style="padding:10px; font-size:12px; color:var(--text-secondary);">Connecting to team stream...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 3-Column Cloud Resource Workbenches -->
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; margin-bottom:1.5rem;">
         
@@ -1139,6 +1182,284 @@
       </div>
     </section>
 
+    <!-- ========================================== -->
+    <!-- MODULE 9: DYNAMIC CONFIG & RUNTIME VARS    -->
+    <!-- ========================================== -->
+    <section class="tab-pane" id="tab-config">
+      <div class="module-header">
+        <div>
+          <h2 class="module-title">⚙️ Dynamic Runtime Configuration & Variables Manager</h2>
+          <p class="module-desc">
+            Zero hardcoded constants. Inspect and hot-patch any system parameter in real-time without restarting the server!
+          </p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button id="cfg-refresh-btn" class="btn btn-secondary">
+            🔄 Refresh Config
+          </button>
+          <button id="cfg-copy-json-btn" class="btn btn-primary" style="background:#ec4899; border-color:#db2777;">
+            📋 Copy Raw JSON
+          </button>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:1.5rem;">
+        <!-- Card 1: Rate Limiter Tuning -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🛡️ Rate Limiter Gateway</span>
+              <span class="system-tag">TOKEN BUCKET / SLIDING</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Algorithm:</label>
+              <select id="cfg-rate-algo" class="form-control" style="width:100%; margin-top:4px;">
+                <option value="token_bucket">Token Bucket</option>
+                <option value="sliding_window">Sliding Window Counter</option>
+              </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Free Capacity:</label>
+                <input id="cfg-rate-free-cap" type="number" class="form-control" style="width:100%;" min="1" max="100">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Free Refill/s:</label>
+                <input id="cfg-rate-free-refill" type="number" step="0.1" class="form-control" style="width:100%;" min="0.1" max="50">
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Pro Capacity:</label>
+                <input id="cfg-rate-pro-cap" type="number" class="form-control" style="width:100%;" min="1" max="500">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Pro Refill/s:</label>
+                <input id="cfg-rate-pro-refill" type="number" step="0.5" class="form-control" style="width:100%;" min="0.5" max="100">
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Free Win (s):</label>
+                <input id="cfg-rate-free-win" type="number" class="form-control" style="width:100%;" min="1" max="3600">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Pro Win (s):</label>
+                <input id="cfg-rate-pro-win" type="number" class="form-control" style="width:100%;" min="1" max="3600">
+              </div>
+            </div>
+            <button id="cfg-save-ratelimit-btn" class="btn btn-primary" style="margin-top:6px; font-size:12px;">
+              💾 Apply Rate Limiter Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2: Distributed Storage Tuning -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📦 S3-Lite Object Storage</span>
+              <span class="system-tag">CHUNKING & RF</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px; font-size:12px;">
+            <div>
+              <div style="display:flex; justify-content:space-between;">
+                <label style="font-weight:600; color:var(--text-secondary);">Replication Factor (RF):</label>
+                <span id="cfg-storage-rf-val" style="color:var(--accent-primary); font-weight:700;">2</span>
+              </div>
+              <input id="cfg-storage-rf" type="range" min="1" max="3" step="1" style="width:100%; margin-top:6px;">
+            </div>
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Chunk Size (Bytes):</label>
+              <input id="cfg-storage-chunk" type="number" class="form-control" style="width:100%;" min="16" max="1048576">
+            </div>
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Sample Document Repeat Factor:</label>
+              <input id="cfg-storage-repeat" type="number" class="form-control" style="width:100%;" min="1" max="100">
+            </div>
+            <button id="cfg-save-storage-btn" class="btn btn-primary" style="margin-top:14px; font-size:12px;">
+              💾 Apply Storage Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 3: Delayed Scheduler & DLQ -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>⏰ Delayed Job Scheduler</span>
+              <span class="system-tag">EXPONENTIAL BACKOFF</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Worker Polling Interval (ms):</label>
+              <input id="cfg-sched-interval" type="number" class="form-control" style="width:100%;" min="200" max="10000">
+            </div>
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Max Retries Before DLQ:</label>
+              <input id="cfg-sched-retries" type="number" class="form-control" style="width:100%;" min="1" max="10">
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between;">
+                <label style="font-weight:600; color:var(--text-secondary);">Simulated Failure Rate:</label>
+                <span id="cfg-sched-failrate-val" style="color:#ef4444; font-weight:700;">0%</span>
+              </div>
+              <input id="cfg-sched-failrate" type="range" min="0" max="90" step="5" style="width:100%; margin-top:6px;">
+            </div>
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Backoff Base (ms):</label>
+              <input id="cfg-sched-backoff" type="number" class="form-control" style="width:100%;" min="100" max="5000">
+            </div>
+            <button id="cfg-save-scheduler-btn" class="btn btn-primary" style="margin-top:6px; font-size:12px;">
+              💾 Apply Scheduler Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:1.5rem;">
+        <!-- Card 4: Activity Feed Fan-Out -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📰 Activity Feed Fan-Out</span>
+              <span class="system-tag">PUSH / PULL / HYBRID</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Fan-Out Architecture Strategy:</label>
+              <select id="cfg-feed-mode" class="form-control" style="width:100%; margin-top:4px;">
+                <option value="hybrid">Hybrid (Push for Users, Pull for Celebrities)</option>
+                <option value="push">Push on Write (Pre-computed Inboxes)</option>
+                <option value="pull">Pull on Read (Fan-Out on Demand)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Celebrity Follower Threshold:</label>
+              <input id="cfg-feed-celeb" type="number" class="form-control" style="width:100%;" min="1" max="10000">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Feed Page Limit:</label>
+                <input id="cfg-feed-limit" type="number" class="form-control" style="width:100%;" min="1" max="100">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Max Inbox Size:</label>
+                <input id="cfg-feed-inbox" type="number" class="form-control" style="width:100%;" min="20" max="1000">
+              </div>
+            </div>
+            <button id="cfg-save-feed-btn" class="btn btn-primary" style="margin-top:14px; font-size:12px;">
+              💾 Apply Feed Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 5: Floci Local Cloud Integration -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>☁️ Floci Cloud AWS Emulator</span>
+              <span class="system-tag">S3 / SQS / DYNAMODB</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Floci AWS Endpoint:</label>
+              <input id="cfg-floci-endpoint" type="text" class="form-control" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-weight:600; color:var(--text-secondary);">Floci Web UI Console URL:</label>
+              <input id="cfg-floci-ui" type="text" class="form-control" style="width:100%;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">AWS Region:</label>
+                <input id="cfg-floci-region" type="text" class="form-control" style="width:100%;">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Default S3 Bucket:</label>
+                <input id="cfg-floci-bucket" type="text" class="form-control" style="width:100%;">
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Default SQS Queue:</label>
+                <input id="cfg-floci-queue" type="text" class="form-control" style="width:100%;">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Default DynamoDB:</label>
+                <input id="cfg-floci-table" type="text" class="form-control" style="width:100%;">
+              </div>
+            </div>
+            <button id="cfg-save-floci-btn" class="btn btn-primary" style="margin-top:6px; font-size:12px;">
+              💾 Apply Floci Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 6: Team Simulation & Live Whiteboard/Flags -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>👥 Team Sim & Platform Core</span>
+              <span class="system-tag">MULTI-AGENT & CANVAS</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input id="cfg-team-active" type="checkbox" style="width:16px; height:16px;">
+              <label for="cfg-team-active" style="font-weight:600; cursor:pointer;">Multi-Agent Team Simulation Active</label>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Team Action (ms):</label>
+                <input id="cfg-team-interval" type="number" class="form-control" style="width:100%;" min="1000" max="30000">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Max Event Log:</label>
+                <input id="cfg-team-maxevents" type="number" class="form-control" style="width:100%;" min="10" max="200">
+              </div>
+            </div>
+            <button id="cfg-save-team-btn" class="btn btn-primary" style="font-size:12px;">
+              💾 Apply Team Sim Settings
+            </button>
+
+            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.06); margin:6px 0;">
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">WB Compaction:</label>
+                <input id="cfg-wb-compaction" type="number" class="form-control" style="width:100%;" min="10" max="500">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--text-secondary);">Flag Latency (ms):</label>
+                <input id="cfg-flags-latency" type="number" class="form-control" style="width:100%;" min="0" max="500">
+              </div>
+            </div>
+            <button id="cfg-save-whiteboard-flags-btn" class="btn btn-secondary" style="font-size:12px;">
+              💾 Apply Canvas & Flag Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raw JSON Inspector Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🧬 Live Runtime JSON Snapshot</span>
+            <span class="system-tag">EVENT-EMITTER STATE</span>
+          </div>
+        </div>
+        <pre id="cfg-raw-json-viewer" style="background:#0a0c10; border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius-md); padding:1rem; font-family:var(--font-mono); font-size:12px; color:#38bdf8; max-height:300px; overflow-y:auto; margin:0;">Loading configuration...</pre>
+      </div>
+    </section>
+
   </main>
 
   <!-- Client JavaScript Modules -->
@@ -1149,6 +1470,7 @@
   <script src="/js/activityFeed.js"></script>
   <script src="/js/objectStorage.js"></script>
   <script src="/js/flociCloud.js"></script>
+  <script src="/js/dynamicConfig.js"></script>
   <script src="/js/app.js"></script>
 
 </body>

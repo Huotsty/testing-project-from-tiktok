@@ -1,0 +1,360 @@
+/**
+ * Team Simulation Engine: Collaborative Multi-Agent & Developer Simulation
+ * 
+ * Simulates a realistic agile engineering team collaborating in real-time:
+ * - Alice (Lead Architect): Uploads design documents & blueprints (S3 chunking)
+ * - Bob (Backend Dev): Schedules deployment jobs & social posts (SQS queuing)
+ * - Carol (SRE / DevOps): Simulates storage node failure/recovery & health checks
+ * - Copilot Agent (AI Agent): Generates automated tests, queries Token Bucket Rate Limiter
+ * - Dave (QA Engineer): Verifies feature flag evaluations & consumes SQS messages
+ */
+
+const config = require('../config');
+
+class TeamSimulationService {
+  constructor() {
+    this.isActive = config.team.active;
+    this.intervalMs = config.team.intervalMs;
+    this.timer = null;
+    this.eventCounter = 0;
+    this.recentEvents = [];
+    this.maxRecentEvents = config.team.maxRecentEvents || 30;
+
+    config.on('change:team', () => {
+      this.isActive = config.team.active;
+      this.intervalMs = config.team.intervalMs;
+      this.maxRecentEvents = config.team.maxRecentEvents || 30;
+      if (Array.isArray(config.team.members) && config.team.members.length > 0) {
+        this.teamMembers = config.team.members;
+      }
+      if (this.isActive) this.start();
+      else this.stop();
+    });
+    
+    this.teamMembers = (Array.isArray(config.team.members) && config.team.members.length > 0)
+      ? config.team.members
+      : [
+        { id: 'alice', name: 'Alice (Lead Architect)', role: 'Architecture & Storage', avatar: '👩‍💻' },
+        { id: 'bob', name: 'Bob (Backend Eng)', role: 'APIs & Messaging', avatar: '👨‍💻' },
+        { id: 'carol', name: 'Carol (SRE / DevOps)', role: 'Chaos & Failover', avatar: '👩‍🔬' },
+        { id: 'copilot-agent', name: '🤖 Copilot Agent', role: 'Autonomous AI Worker', avatar: '🤖' },
+        { id: 'dave', name: 'Dave (QA Lead)', role: 'Testing & Verification', avatar: '👨‍🔧' }
+      ];
+  }
+
+  init(services) {
+    this.whiteboardService = services.whiteboardService;
+    this.featureFlagService = services.featureFlagService;
+    this.postSchedulerService = services.postSchedulerService;
+    this.rateLimiterService = services.rateLimiterService;
+    this.activityFeedService = services.activityFeedService;
+    this.objectStorageService = services.objectStorageService;
+    this.flociService = services.flociService;
+
+    // Seed initial event
+    this.logEvent({
+      member: this.teamMembers[0],
+      action: 'team_assembled',
+      description: 'Distributed engineering team assembled with 5 members + Floci local cloud.'
+    });
+
+    if (this.isActive) {
+      this.start();
+    }
+  }
+
+  start() {
+    if (this.timer) clearInterval(this.timer);
+    this.isActive = true;
+    this.timer = setInterval(() => this.executeRandomTeamAction(), this.intervalMs);
+  }
+
+  stop() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    this.isActive = false;
+  }
+
+  toggle(enabled) {
+    if (enabled) this.start();
+    else this.stop();
+    return { isActive: this.isActive, intervalMs: this.intervalMs };
+  }
+
+  setIntervalMs(ms) {
+    this.intervalMs = Math.max(1000, Number(ms));
+    if (this.isActive) {
+      this.start();
+    }
+    return { intervalMs: this.intervalMs };
+  }
+
+  async executeRandomTeamAction() {
+    const actionTypes = [
+      'storage_upload',
+      'scheduler_post',
+      'flag_eval_or_toggle',
+      'ratelimit_api_burst',
+      'whiteboard_stroke',
+      'sqs_cloud_task'
+    ];
+
+    const chosenAction = actionTypes[Math.floor(Math.random() * actionTypes.length)];
+    try {
+      switch (chosenAction) {
+        case 'storage_upload':
+          await this.actionStorageUpload();
+          break;
+        case 'scheduler_post':
+          await this.actionSchedulerPost();
+          break;
+        case 'flag_eval_or_toggle':
+          await this.actionFlagActivity();
+          break;
+        case 'ratelimit_api_burst':
+          await this.actionRateLimitBurst();
+          break;
+        case 'whiteboard_stroke':
+          await this.actionWhiteboardStroke();
+          break;
+        case 'sqs_cloud_task':
+          await this.actionSqsCloudTask();
+          break;
+      }
+    } catch (err) {
+      console.error('[TeamSimulation] Error executing action:', err.message);
+    }
+  }
+
+  /**
+   * Action: Alice or Copilot Agent uploads a new chunked file
+   */
+  async actionStorageUpload() {
+    const member = Math.random() > 0.5 ? this.teamMembers[0] : this.teamMembers[3];
+    const filenames = [
+      `service-mesh-spec-${Date.now().toString().slice(-4)}.json`,
+      `kafka-partition-plan-${Date.now().toString().slice(-4)}.md`,
+      `dynamodb-schema-v2-${Date.now().toString().slice(-4)}.sql`,
+      `agent-decision-log-${Date.now().toString().slice(-4)}.log`
+    ];
+    const filename = filenames[Math.floor(Math.random() * filenames.length)];
+    const content = `TEAM DOCUMENT GENERATED BY ${member.name.toUpperCase()}\n` +
+      `Timestamp: ${new Date().toISOString()}\n` +
+      `Replication Factor: ${config.storage.replicationFactor}\n` +
+      `Integrity: Content-Addressable SHA-256 Chunks\n` +
+      `Summary: High-throughput distributed configuration verified locally in Floci S3.\n`.repeat(3);
+
+    const buf = Buffer.from(content, 'utf-8');
+    const chunkSize = config.storage.chunkSize || 64;
+    const meta = this.objectStorageService.storeFileDirect(filename, 'text/plain', buf, chunkSize);
+
+    // Dynamic S3 mirror
+    if (this.flociService) {
+      this.flociService.s3PutObject(config.floci.defaultBucket, `objects/${filename}`, content).catch(() => {});
+    }
+
+    this.activityFeedService.ingestEvent({
+      actor: member.id,
+      action: 'file_uploaded',
+      repo: 'syslab/s3-cluster',
+      title: `${member.avatar} ${member.name} committed "${filename}" (${meta.totalChunks} chunks)`
+    });
+
+    this.logEvent({
+      member,
+      action: 'storage_upload',
+      description: `Stored "${filename}" (${meta.size}B, ${meta.totalChunks} chunks) & mirrored to Floci S3 bucket '${config.floci.defaultBucket}'`
+    });
+  }
+
+  /**
+   * Action: Bob schedules an async release or notification
+   */
+  async actionSchedulerPost() {
+    const member = this.teamMembers[1];
+    const postTopics = [
+      '🚀 Deploying Sprint 42 Microservices to staging cluster',
+      '📈 Scaled Redis read replicas to handle 50k QPS',
+      '🛡️ Rotated API gateway JWT signing secrets',
+      '📦 Automated Floci S3 replication enabled across test suites'
+    ];
+    const topic = postTopics[Math.floor(Math.random() * postTopics.length)];
+    const idempotencyKey = `team-job-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+
+    const delayMs = config.scheduler.workerIntervalMs ? config.scheduler.workerIntervalMs * 3 : 5000;
+    const jobResult = this.postSchedulerService.schedulePost({
+      content: topic,
+      platform: 'Internal SQS Dispatch',
+      scheduledAt: Date.now() + delayMs,
+      idempotencyKey
+    });
+
+    // Dynamic SQS mirror
+    if (this.flociService) {
+      const qUrl = this.flociService.getQueueUrl(config.floci.defaultQueue);
+      this.flociService.sqsSendMessage(qUrl, {
+        author: member.name,
+        topic,
+        jobId: jobResult.job.id,
+        idempotencyKey
+      }).catch(() => {});
+    }
+
+    this.activityFeedService.ingestEvent({
+      actor: member.id,
+      action: 'post_scheduled',
+      repo: 'syslab/scheduler',
+      title: `${member.avatar} ${member.name} enqueued Job #${jobResult.job.id} for "${topic.slice(0, 30)}..."`
+    });
+
+    this.logEvent({
+      member,
+      action: 'scheduler_post',
+      description: `Enqueued Job #${jobResult.job.id} with Idempotency Key: ${idempotencyKey}`
+    });
+  }
+
+  /**
+   * Action: Dave or Carol tests/toggles feature flags
+   */
+  async actionFlagActivity() {
+    const member = Math.random() > 0.5 ? this.teamMembers[2] : this.teamMembers[4];
+    const flags = this.featureFlagService.getAllFlags();
+    if (!flags.length) return;
+
+    const chosenFlag = flags[Math.floor(Math.random() * flags.length)];
+    const testUser = `user-${Math.floor(Math.random() * 500)}`;
+    const evalResult = this.featureFlagService.evaluate(chosenFlag.key, testUser);
+
+    this.logEvent({
+      member,
+      action: 'flag_evaluation',
+      description: `Evaluated '${chosenFlag.key}' for ${testUser}: ${evalResult.enabled ? 'ENABLED' : 'DISABLED'} (0.02ms cached)`
+    });
+  }
+
+  /**
+   * Action: Copilot Agent fires a token bucket rate-limit burst
+   */
+  async actionRateLimitBurst() {
+    const member = this.teamMembers[3];
+    const clientKey = 'ai-agent-copilot';
+    const check = this.rateLimiterService.checkLimit(clientKey, 'pro');
+
+    this.logEvent({
+      member,
+      action: 'rate_limit_check',
+      description: `Executed API check: ${check.allowed ? '✅ ALLOWED' : '❌ 429 BLOCKED'} (${check.remaining} tokens remaining in bucket)`
+    });
+  }
+
+  /**
+   * Action: Whiteboard collaboration
+   */
+  async actionWhiteboardStroke() {
+    const member = this.teamMembers[Math.floor(Math.random() * this.teamMembers.length)];
+    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const shape = {
+      id: `shape-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      type: Math.random() > 0.5 ? 'box' : 'circle',
+      x: Math.floor(Math.random() * 600) + 50,
+      y: Math.floor(Math.random() * 400) + 50,
+      color,
+      author: member.name
+    };
+
+    if (this.whiteboardService.applyDelta) {
+      this.whiteboardService.applyDelta({
+        type: 'draw',
+        shape
+      });
+    }
+
+    this.logEvent({
+      member,
+      action: 'whiteboard_draw',
+      description: `Collaborated on live whiteboard: placed ${shape.type} at (${shape.x}, ${shape.y})`
+    });
+  }
+
+  /**
+   * Action: Direct SQS cloud dispatch
+   */
+  async actionSqsCloudTask() {
+    const member = this.teamMembers[1];
+    if (!this.flociService) return;
+
+    const qUrl = this.flociService.getQueueUrl(config.floci.defaultQueue);
+    const taskPayload = {
+      sender: member.name,
+      task: 'Process async video transcoding and replicate to S3',
+      timestamp: Date.now()
+    };
+
+    const res = await this.flociService.sqsSendMessage(qUrl, taskPayload).catch(() => null);
+    if (res && res.success) {
+      this.logEvent({
+        member,
+        action: 'cloud_sqs_task',
+        description: `Dispatched cloud task to SQS (MsgID: ${res.messageId ? res.messageId.slice(0, 8) : 'ok'}...)`
+      });
+    }
+  }
+
+  /**
+   * High-intensity Sprint Burst: runs 5 concurrent team actions
+   */
+  async triggerSprintBurst() {
+    const burstPromises = [
+      this.actionStorageUpload(),
+      this.actionSchedulerPost(),
+      this.actionRateLimitBurst(),
+      this.actionFlagActivity(),
+      this.actionSqsCloudTask()
+    ];
+
+    await Promise.all(burstPromises);
+    this.logEvent({
+      member: { id: 'team', name: 'Sprint Orchestrator', role: 'All Hands', avatar: '🚀' },
+      action: 'sprint_burst',
+      description: '⚡ SPRINT BURST EXECUTED: 5 concurrent actions dispatched across Storage, SQS, Rate Limiter & DynamoDB!'
+    });
+
+    return {
+      success: true,
+      executedActions: 5,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  logEvent(event) {
+    this.eventCounter++;
+    const enriched = {
+      id: `evt-${this.eventCounter}`,
+      timestamp: new Date().toLocaleTimeString(),
+      rawTime: Date.now(),
+      ...event
+    };
+    this.recentEvents.unshift(enriched);
+    const limit = this.maxRecentEvents || config.team.maxRecentEvents || 30;
+    if (this.recentEvents.length > limit) {
+      this.recentEvents.pop();
+    }
+  }
+
+  getStatus() {
+    return {
+      isActive: this.isActive,
+      intervalMs: this.intervalMs,
+      totalEventsGenerated: this.eventCounter,
+      teamMembers: this.teamMembers,
+      recentEvents: this.recentEvents.slice(0, 15)
+    };
+  }
+}
+
+module.exports = new TeamSimulationService();

@@ -21,6 +21,7 @@
  */
 
 const crypto = require('crypto');
+const config = require('../config');
 
 class PostSchedulerService {
   constructor() {
@@ -34,11 +35,18 @@ class PostSchedulerService {
     // Worker execution log
     this.auditLog = [];
 
-    // Worker configuration
-    this.workerIntervalMs = 1000;
+    // Dynamic Worker configuration
+    this.workerIntervalMs = config.scheduler.workerIntervalMs;
+    this.simulatedFailureRate = config.scheduler.failureRate;
+    this.maxRetries = config.scheduler.maxRetries;
     this.workerTimer = null;
-    this.simulatedFailureRate = 0.0; // 0% by default, can be toggled by user in UI to test retries!
-    this.maxRetries = 3;
+
+    config.on('change:scheduler', () => {
+      this.workerIntervalMs = config.scheduler.workerIntervalMs;
+      this.simulatedFailureRate = config.scheduler.failureRate;
+      this.maxRetries = config.scheduler.maxRetries;
+      this.startWorker();
+    });
 
     // Metrics
     this.metrics = {
@@ -190,8 +198,9 @@ class PostSchedulerService {
     this.metrics.retriesTriggered++;
 
     if (job.attempts < job.maxRetries) {
-      // Exponential backoff: 2s, 4s, 8s...
-      const backoffDelay = Math.pow(2, job.attempts) * 1000;
+      // Exponential backoff dynamically configured
+      const backoffBase = config.scheduler.backoffBaseMs || 1000;
+      const backoffDelay = Math.pow(2, job.attempts) * backoffBase;
       job.status = 'retrying';
       job.scheduledAt = Date.now() + backoffDelay;
       job.history.push({
@@ -247,7 +256,8 @@ class PostSchedulerService {
       timestamp: Date.now(),
       message
     });
-    if (this.auditLog.length > 50) this.auditLog.pop();
+    const maxLogs = config.scheduler.maxAuditLogs || 50;
+    if (this.auditLog.length > maxLogs) this.auditLog.pop();
   }
 
   getAllJobs() {

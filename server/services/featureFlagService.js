@@ -17,6 +17,7 @@
  */
 
 const crypto = require('crypto');
+const config = require('../config');
 
 class FeatureFlagService {
   constructor() {
@@ -137,7 +138,7 @@ class FeatureFlagService {
    */
   evaluate(key, userId = 'anonymous') {
     this.metrics.evaluationsCount++;
-    this.metrics.simulatedLatencySavingsMs += 45; // Saved ~45ms of HTTP network roundtrip!
+    this.metrics.simulatedLatencySavingsMs += (config.featureFlags.simulatedNetworkLatencyMs || 45);
 
     const flag = this.flags.get(key);
     if (!flag) return { key, enabled: false, reason: 'FLAG_NOT_FOUND' };
@@ -159,8 +160,9 @@ class FeatureFlagService {
     }
 
     // Deterministic hash bucket
+    const modulus = config.featureFlags.hashModulus || 100;
     const hash = crypto.createHash('md5').update(`${userId}:${key}`).digest('hex');
-    const bucket = parseInt(hash.substring(0, 8), 16) % 100;
+    const bucket = parseInt(hash.substring(0, 8), 16) % modulus;
     const enabled = bucket < flag.rolloutPercentage;
 
     return {

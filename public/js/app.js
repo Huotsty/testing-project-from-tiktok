@@ -19,6 +19,7 @@ const App = {
     ActivityFeedClient.init();
     ObjectStorageClient.init();
     FlociCloudClient.init();
+    DynamicConfigClient.init();
 
     // Initialize unified pipeline runner and scale calculator
     this.setupUnifiedPipelineRunner();

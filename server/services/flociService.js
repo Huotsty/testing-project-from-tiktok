@@ -9,11 +9,21 @@
  * Zero external credentials, zero AWS bills, sub-50ms execution.
  */
 
+const config = require('../config');
+
 class FlociService {
   constructor() {
-    this.endpoint = process.env.AWS_ENDPOINT_URL || 'http://localhost:4566';
-    this.uiEndpoint = process.env.FLOCI_UI_URL || 'http://localhost:4500';
-    this.region = process.env.AWS_REGION || 'us-east-1';
+    this.reloadConfig();
+    config.on('change:floci', () => this.reloadConfig());
+  }
+
+  reloadConfig() {
+    this.endpoint = config.floci.endpoint;
+    this.uiEndpoint = config.floci.uiUrl;
+    this.region = config.floci.region;
+    this.defaultBucket = config.floci.defaultBucket;
+    this.defaultQueue = config.floci.defaultQueue;
+    this.defaultTable = config.floci.defaultTable;
   }
 
   /**
@@ -61,8 +71,9 @@ class FlociService {
   // S3 OBJECT STORAGE ADAPTER
   // ==========================================
 
-  async s3CreateBucket(bucketName = 'syslab-cloud-bucket') {
-    const safeName = bucketName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  async s3CreateBucket(bucketName = this.defaultBucket) {
+    const targetBucket = bucketName || this.defaultBucket;
+    const safeName = targetBucket.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const res = await fetch(`${this.endpoint}/${safeName}`, { method: 'PUT' });
     return {
       success: res.ok || res.status === 409, // 409 = already exists
@@ -89,27 +100,36 @@ class FlociService {
   }
 
   async s3ListBuckets() {
-    const res = await fetch(`${this.endpoint}/`);
-    const xml = await res.text();
-    // Simple regex parser for bucket names from S3 ListAllMyBucketsResult XML
-    const matches = [...xml.matchAll(/<Name>([^<]+)<\/Name>/g)].map(m => m[1]);
-    return matches;
+    try {
+      const res = await fetch(`${this.endpoint}/`);
+      if (!res.ok) return [];
+      const xml = await res.text();
+      const matches = [...xml.matchAll(/<Name>([^<]+)<\/Name>/g)].map(m => m[1]);
+      return matches;
+    } catch (_) {
+      return [];
+    }
   }
 
   async s3ListObjects(bucketName) {
-    const res = await fetch(`${this.endpoint}/${bucketName}`);
-    if (!res.ok) return [];
-    const xml = await res.text();
-    const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map(m => m[1]);
-    const sizes = [...xml.matchAll(/<Size>([^<]+)<\/Size>/g)].map(m => parseInt(m[1], 10));
-    return keys.map((key, i) => ({ key, size: sizes[i] || 0 }));
+    try {
+      const res = await fetch(`${this.endpoint}/${bucketName}`);
+      if (!res.ok) return [];
+      const xml = await res.text();
+      const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map(m => m[1]);
+      const sizes = [...xml.matchAll(/<Size>([^<]+)<\/Size>/g)].map(m => parseInt(m[1], 10));
+      return keys.map((key, i) => ({ key, size: sizes[i] || 0 }));
+    } catch (_) {
+      return [];
+    }
   }
 
   /**
    * Syncs SysLab Object Storage files to Floci S3
    */
-  async syncFromSysLabStorage(objectStorageService, bucketName = 'syslab-cloud-bucket') {
-    await this.s3CreateBucket(bucketName);
+  async syncFromSysLabStorage(objectStorageService, bucketName = this.defaultBucket) {
+    const targetBucket = bucketName || this.defaultBucket;
+    await this.s3CreateBucket(targetBucket);
     const catalog = objectStorageService.getAllFiles();
     const synced = [];
 
@@ -149,14 +169,15 @@ class FlociService {
   // SQS MESSAGE QUEUE ADAPTER
   // ==========================================
 
-  async sqsCreateQueue(queueName = 'syslab-cloud-queue') {
+  async sqsCreateQueue(queueName = this.defaultQueue) {
+    const targetQueue = queueName || this.defaultQueue;
     const res = await fetch(`${this.endpoint}/`, {
       method: 'POST',
       headers: {
         'Host': `sqs.${this.region}.localhost:4566`,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: `Action=CreateQueue&QueueName=${encodeURIComponent(queueName)}&Version=2012-11-05`
+      body: `Action=CreateQueue&QueueName=${encodeURIComponent(targetQueue)}&Version=2012-11-05`
     });
 
     const xml = await res.text();
@@ -170,19 +191,28 @@ class FlociService {
     };
   }
 
-  async sqsListQueues() {
-    const res = await fetch(`${this.endpoint}/`, {
-      method: 'POST',
-      headers: {
-        'Host': `sqs.${this.region}.localhost:4566`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'Action=ListQueues&Version=2012-11-05'
-    });
+  getQueueUrl(queueName = this.defaultQueue) {
+    const targetQueue = queueName || this.defaultQueue;
+    return `${this.endpoint}/000000000000/${targetQueue}`;
+  }
 
-    const xml = await res.text();
-    const matches = [...xml.matchAll(/<QueueUrl>([^<]+)<\/QueueUrl>/g)].map(m => m[1]);
-    return matches;
+  async sqsListQueues() {
+    try {
+      const res = await fetch(`${this.endpoint}/`, {
+        method: 'POST',
+        headers: {
+          'Host': `sqs.${this.region}.localhost:4566`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'Action=ListQueues&Version=2012-11-05'
+      });
+
+      const xml = await res.text();
+      const matches = [...xml.matchAll(/<QueueUrl>([^<]+)<\/QueueUrl>/g)].map(m => m[1]);
+      return matches;
+    } catch (_) {
+      return [];
+    }
   }
 
   async sqsSendMessage(queueUrl, messageBody) {
@@ -236,8 +266,9 @@ class FlociService {
   /**
    * Bridges SysLab's scheduled posts into Floci SQS
    */
-  async bridgePostScheduler(postSchedulerService, queueName = 'syslab-posts-queue') {
-    const q = await this.sqsCreateQueue(queueName);
+  async bridgePostScheduler(postSchedulerService, queueName = this.defaultQueue) {
+    const targetQueue = queueName || this.defaultQueue;
+    const q = await this.sqsCreateQueue(targetQueue);
     const jobs = postSchedulerService.getAllJobs ? postSchedulerService.getAllJobs() : [];
     const published = [];
 
@@ -265,7 +296,8 @@ class FlociService {
   // DYNAMODB NOSQL DATABASE ADAPTER
   // ==========================================
 
-  async dynamoCreateTable(tableName = 'SysLabFlags') {
+  async dynamoCreateTable(tableName = this.defaultTable) {
+    const targetTable = tableName || this.defaultTable;
     const res = await fetch(`${this.endpoint}/`, {
       method: 'POST',
       headers: {
@@ -274,7 +306,7 @@ class FlociService {
         'Content-Type': 'application/x-amz-json-1.0'
       },
       body: JSON.stringify({
-        TableName: tableName,
+        TableName: targetTable,
         KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }],
         AttributeDefinitions: [{ AttributeName: 'id', AttributeType: 'S' }],
         BillingMode: 'PAY_PER_REQUEST'
@@ -342,8 +374,9 @@ class FlociService {
   /**
    * Exports SysLab feature flags into DynamoDB
    */
-  async syncFeatureFlags(featureFlagService, tableName = 'SysLabFlags') {
-    await this.dynamoCreateTable(tableName);
+  async syncFeatureFlags(featureFlagService, tableName = this.defaultTable) {
+    const targetTable = tableName || this.defaultTable;
+    await this.dynamoCreateTable(targetTable);
     const flags = featureFlagService.getAllFlags();
     const synced = [];
 

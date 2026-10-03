@@ -23,6 +23,8 @@ const rateLimiterService = require('./services/rateLimiterService');
 const activityFeedService = require('./services/activityFeedService');
 const objectStorageService = require('./services/objectStorageService');
 const flociService = require('./services/flociService');
+const teamSimulationService = require('./services/teamSimulationService');
+const config = require('./config');
 
 const app = express();
 const server = http.createServer(app);
@@ -144,6 +146,16 @@ app.post('/api/flags', (req, res) => {
 app.post('/api/flags/:key/toggle', (req, res) => {
   const updated = featureFlagService.toggleFlag(req.params.key);
   if (!updated) return res.status(404).json({ error: 'Flag not found' });
+  
+  // Dynamic auto-mirror to Floci DynamoDB
+  flociService.dynamoPutItem('SysLabFlags', {
+    id: updated.key,
+    name: updated.name || updated.key,
+    enabled: !!updated.enabled,
+    percentage: updated.rolloutPercentage !== undefined ? updated.rolloutPercentage : 100,
+    updatedAt: new Date().toISOString()
+  }).catch(() => {});
+
   activityFeedService.ingestEvent({
     actor: 'admin',
     action: 'flag_toggled',
@@ -198,6 +210,16 @@ app.post('/api/scheduler/schedule', (req, res) => {
   });
 
   if (!result.isDuplicate) {
+    // Dynamic auto-mirror to Floci SQS queue
+    const qUrl = `http://localhost:4566/000000000000/syslab-posts-queue`;
+    flociService.sqsSendMessage(qUrl, {
+      source: 'SysLab_Scheduler',
+      jobId: result.job.id,
+      idempotencyKey: result.job.idempotencyKey,
+      content: result.job.content,
+      scheduledAt: result.job.scheduledAt
+    }).catch(() => {});
+
     activityFeedService.ingestEvent({
       actor: 'creator',
       action: 'post_scheduled',
@@ -348,6 +370,10 @@ app.post('/api/storage/upload-direct', (req, res) => {
 
   const buffer = Buffer.from(content, 'utf-8');
   const metadata = objectStorageService.storeFileDirect(filename, mimeType, buffer, Number(chunkSize));
+
+  // Dynamic auto-mirror to Floci S3 bucket
+  flociService.s3PutObject(config.floci.defaultBucket, `objects/${metadata.filename}`, content, mimeType).catch(() => {});
+  flociService.s3PutObject(config.floci.defaultBucket, `manifests/${metadata.fileId}.json`, metadata, 'application/json').catch(() => {});
 
   activityFeedService.ingestEvent({
     actor: 'alice',
@@ -559,7 +585,7 @@ app.get('/api/floci/status', async (req, res) => {
 app.get('/api/floci/s3/list', async (req, res) => {
   try {
     const buckets = await flociService.s3ListBuckets();
-    const bucket = req.query.bucket || 'syslab-cloud-bucket';
+    const bucket = req.query.bucket || config.floci.defaultBucket;
     const objects = await flociService.s3ListObjects(bucket);
     res.json({ success: true, buckets, currentBucket: bucket, objects });
   } catch (err) {
@@ -569,7 +595,7 @@ app.get('/api/floci/s3/list', async (req, res) => {
 
 app.post('/api/floci/s3/sync', async (req, res) => {
   try {
-    const result = await flociService.syncFromSysLabStorage(objectStorageService, req.body.bucket || 'syslab-cloud-bucket');
+    const result = await flociService.syncFromSysLabStorage(objectStorageService, req.body.bucket || config.floci.defaultBucket);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -578,7 +604,8 @@ app.post('/api/floci/s3/sync', async (req, res) => {
 
 app.post('/api/floci/s3/upload', async (req, res) => {
   try {
-    const { bucket = 'syslab-cloud-bucket', filename, content } = req.body;
+    const bucket = req.body.bucket || config.floci.defaultBucket;
+    const { filename, content } = req.body;
     const result = await flociService.s3PutObject(bucket, `uploads/${filename || 'note.txt'}`, content || 'Sample text content');
     res.json(result);
   } catch (err) {
@@ -597,7 +624,7 @@ app.get('/api/floci/sqs/list', async (req, res) => {
 
 app.post('/api/floci/sqs/bridge', async (req, res) => {
   try {
-    const result = await flociService.bridgePostScheduler(postSchedulerService, req.body.queueName || 'syslab-posts-queue');
+    const result = await flociService.bridgePostScheduler(postSchedulerService, req.body.queueName || config.floci.defaultQueue);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -607,7 +634,7 @@ app.post('/api/floci/sqs/bridge', async (req, res) => {
 app.post('/api/floci/sqs/send', async (req, res) => {
   try {
     const { queueUrl, message } = req.body;
-    const result = await flociService.sqsSendMessage(queueUrl, message);
+    const result = await flociService.sqsSendMessage(queueUrl || flociService.getQueueUrl(config.floci.defaultQueue), message);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -616,8 +643,7 @@ app.post('/api/floci/sqs/send', async (req, res) => {
 
 app.get('/api/floci/sqs/receive', async (req, res) => {
   try {
-    const { queueUrl } = req.query;
-    if (!queueUrl) return res.status(400).json({ success: false, error: 'queueUrl is required' });
+    const queueUrl = req.query.queueUrl || flociService.getQueueUrl(config.floci.defaultQueue);
     const messages = await flociService.sqsReceiveMessages(queueUrl);
     res.json({ success: true, messages });
   } catch (err) {
@@ -627,7 +653,7 @@ app.get('/api/floci/sqs/receive', async (req, res) => {
 
 app.post('/api/floci/dynamodb/sync', async (req, res) => {
   try {
-    const result = await flociService.syncFeatureFlags(featureFlagService, req.body.tableName || 'SysLabFlags');
+    const result = await flociService.syncFeatureFlags(featureFlagService, req.body.tableName || config.floci.defaultTable);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -636,11 +662,45 @@ app.post('/api/floci/dynamodb/sync', async (req, res) => {
 
 app.get('/api/floci/dynamodb/scan', async (req, res) => {
   try {
-    const items = await flociService.dynamoScan(req.query.tableName || 'SysLabFlags');
-    res.json({ success: true, tableName: req.query.tableName || 'SysLabFlags', items });
+    const targetTable = req.query.tableName || config.floci.defaultTable;
+    const items = await flociService.dynamoScan(targetTable);
+    res.json({ success: true, tableName: targetTable, items });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// ==========================================
+// 9. COLLABORATIVE TEAM SIMULATION API
+// ==========================================
+app.get('/api/team/status', (req, res) => {
+  res.json(teamSimulationService.getStatus());
+});
+
+app.post('/api/team/toggle', (req, res) => {
+  const result = teamSimulationService.toggle(req.body.enabled);
+  res.json({ success: true, ...result });
+});
+
+app.post('/api/team/burst', async (req, res) => {
+  const result = await teamSimulationService.triggerSprintBurst();
+  res.json(result);
+});
+
+app.post('/api/team/speed', (req, res) => {
+  const result = teamSimulationService.setIntervalMs(req.body.intervalMs);
+  res.json({ success: true, ...result });
+});
+
+// Initialize real-time team simulation with all services
+teamSimulationService.init({
+  whiteboardService,
+  featureFlagService,
+  postSchedulerService,
+  rateLimiterService,
+  activityFeedService,
+  objectStorageService,
+  flociService
 });
 
 // Cloud Liveness & Readiness Probes (Kubernetes / AWS ECS / Render / Cloud Run)
@@ -657,8 +717,27 @@ app.get(['/healthz', '/api/health'], (req, res) => {
   });
 });
 
-const PORT = parseInt(process.env.PORT, 10) || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+// ==========================================
+// 10. DYNAMIC RUNTIME CONFIGURATION API
+// ==========================================
+app.get('/api/config', (req, res) => {
+  res.json({
+    success: true,
+    config: config.getAll()
+  });
+});
+
+app.patch('/api/config/:section', (req, res) => {
+  try {
+    const updated = config.update(req.params.section, req.body);
+    res.json({ success: true, section: req.params.section, updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+const PORT = config.server.port;
+const HOST = config.server.host;
 
 server.listen(PORT, HOST, () => {
   console.log(`=======================================================`);

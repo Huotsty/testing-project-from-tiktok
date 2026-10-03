@@ -16,27 +16,12 @@
  *    Different capacity & refill rules per client API key / tier (Free vs Pro).
  */
 
+const config = require('../config');
+
 class RateLimiterService {
   constructor() {
-    this.selectedAlgorithm = 'token_bucket'; // 'token_bucket' | 'sliding_window'
-
-    // Configuration tiers
-    this.tiers = {
-      free: {
-        capacity: 5,        // Max burst bucket capacity
-        refillRate: 1,      // 1 token every 2 seconds (0.5 tokens/sec)
-        refillPerSec: 0.5,
-        windowMs: 15000,    // Sliding window 15 seconds
-        windowLimit: 5      // 5 requests per 15s window
-      },
-      pro: {
-        capacity: 20,       // Max burst
-        refillRate: 5,
-        refillPerSec: 2.0,  // 2 tokens/sec
-        windowMs: 15000,
-        windowLimit: 20
-      }
-    };
+    this.reloadConfig();
+    config.on('change:rateLimiter', () => this.reloadConfig());
 
     // Client buckets: key -> { tokens, lastRefillTimestamp }
     this.tokenBuckets = new Map();
@@ -56,6 +41,27 @@ class RateLimiterService {
     };
   }
 
+  reloadConfig() {
+    this.selectedAlgorithm = config.rateLimiter.defaultAlgorithm;
+    this.maxLogEntries = config.rateLimiter.maxLogEntries || 50;
+    this.tiers = {
+      free: {
+        capacity: config.rateLimiter.freeCapacity,
+        refillRate: config.rateLimiter.freeRefillRate,
+        refillPerSec: config.rateLimiter.freeRefillPerSec,
+        windowMs: config.rateLimiter.freeWindowMs,
+        windowLimit: config.rateLimiter.freeCapacity
+      },
+      pro: {
+        capacity: config.rateLimiter.proCapacity,
+        refillRate: config.rateLimiter.proRefillRate,
+        refillPerSec: config.rateLimiter.proRefillPerSec,
+        windowMs: config.rateLimiter.proWindowMs,
+        windowLimit: config.rateLimiter.proCapacity
+      }
+    };
+  }
+
   setAlgorithm(algo) {
     if (algo === 'token_bucket' || algo === 'sliding_window') {
       this.selectedAlgorithm = algo;
@@ -67,14 +73,14 @@ class RateLimiterService {
    */
   checkLimit(clientKey = 'user_default', tier = 'free') {
     this.metrics.totalRequests++;
-    const config = this.tiers[tier] || this.tiers.free;
+    const tierRule = this.tiers[tier] || this.tiers.free;
     const now = Date.now();
 
     let result;
     if (this.selectedAlgorithm === 'token_bucket') {
-      result = this.evaluateTokenBucket(clientKey, config, now);
+      result = this.evaluateTokenBucket(clientKey, tierRule, now);
     } else {
-      result = this.evaluateSlidingWindow(clientKey, config, now);
+      result = this.evaluateSlidingWindow(clientKey, tierRule, now);
     }
 
     if (result.allowed) {
@@ -96,7 +102,7 @@ class RateLimiterService {
       limit: result.limit,
       retryAfter: result.retryAfter
     });
-    if (this.requestLog.length > 40) this.requestLog.pop();
+    if (this.requestLog.length > this.maxLogEntries) this.requestLog.pop();
 
     return result;
   }
@@ -104,20 +110,20 @@ class RateLimiterService {
   /**
    * Algorithm 1: Token Bucket
    */
-  evaluateTokenBucket(clientKey, config, now) {
+  evaluateTokenBucket(clientKey, tierRule, now) {
     let bucket = this.tokenBuckets.get(clientKey);
 
     if (!bucket) {
       bucket = {
-        tokens: config.capacity,
+        tokens: tierRule.capacity,
         lastRefill: now
       };
       this.tokenBuckets.set(clientKey, bucket);
     } else {
       // Calculate token refill based on delta time: (now - lastRefill) * refillPerSec
       const elapsedSeconds = (now - bucket.lastRefill) / 1000;
-      const refilledTokens = elapsedSeconds * config.refillPerSec;
-      bucket.tokens = Math.min(config.capacity, bucket.tokens + refilledTokens);
+      const refilledTokens = elapsedSeconds * tierRule.refillPerSec;
+      bucket.tokens = Math.min(tierRule.capacity, bucket.tokens + refilledTokens);
       bucket.lastRefill = now;
     }
 
@@ -128,27 +134,27 @@ class RateLimiterService {
       return {
         allowed: true,
         status: 200,
-        limit: config.capacity,
+        limit: tierRule.capacity,
         remaining: Math.floor(bucket.tokens),
-        resetSeconds: Math.ceil((config.capacity - bucket.tokens) / config.refillPerSec),
+        resetSeconds: Math.ceil((tierRule.capacity - bucket.tokens) / tierRule.refillPerSec),
         headers: {
-          'X-RateLimit-Limit': config.capacity,
+          'X-RateLimit-Limit': tierRule.capacity,
           'X-RateLimit-Remaining': Math.floor(bucket.tokens),
-          'X-RateLimit-Reset': Math.ceil((config.capacity - bucket.tokens) / config.refillPerSec)
+          'X-RateLimit-Reset': Math.ceil((tierRule.capacity - bucket.tokens) / tierRule.refillPerSec)
         }
       };
     } else {
       // Bucket empty: Throttled!
-      const secondsUntilNextToken = Math.ceil((1 - bucket.tokens) / config.refillPerSec);
+      const secondsUntilNextToken = Math.ceil((1 - bucket.tokens) / tierRule.refillPerSec);
       return {
         allowed: false,
         status: 429,
-        limit: config.capacity,
+        limit: tierRule.capacity,
         remaining: 0,
         retryAfter: secondsUntilNextToken,
         resetSeconds: secondsUntilNextToken,
         headers: {
-          'X-RateLimit-Limit': config.capacity,
+          'X-RateLimit-Limit': tierRule.capacity,
           'X-RateLimit-Remaining': 0,
           'Retry-After': secondsUntilNextToken
         }
@@ -159,7 +165,7 @@ class RateLimiterService {
   /**
    * Algorithm 2: Sliding Window Log
    */
-  evaluateSlidingWindow(clientKey, config, now) {
+  evaluateSlidingWindow(clientKey, tierRule, now) {
     let timestamps = this.slidingWindows.get(clientKey);
     if (!timestamps) {
       timestamps = [];
@@ -167,44 +173,43 @@ class RateLimiterService {
     }
 
     // Filter out timestamps older than current window (now - windowMs)
-    const windowStart = now - config.windowMs;
+    const windowStart = now - tierRule.windowMs;
     timestamps = timestamps.filter(ts => ts > windowStart);
     this.slidingWindows.set(clientKey, timestamps);
 
-    if (timestamps.length < config.windowLimit) {
+    if (timestamps.length < tierRule.windowLimit) {
       timestamps.push(now);
-      const remaining = config.windowLimit - timestamps.length;
+      const remaining = tierRule.windowLimit - timestamps.length;
       const oldest = timestamps[0];
-      const resetSeconds = Math.ceil((oldest + config.windowMs - now) / 1000);
+      const resetSeconds = Math.ceil((oldest + tierRule.windowMs - now) / 1000);
 
       return {
         allowed: true,
         status: 200,
-        limit: config.windowLimit,
+        limit: tierRule.windowLimit,
         remaining,
         resetSeconds,
         headers: {
-          'X-RateLimit-Limit': config.windowLimit,
+          'X-RateLimit-Limit': tierRule.windowLimit,
           'X-RateLimit-Remaining': remaining,
           'X-RateLimit-Reset': resetSeconds
         }
       };
     } else {
-      // Window full: Throttled!
       const oldest = timestamps[0];
-      const retryAfter = Math.max(1, Math.ceil((oldest + config.windowMs - now) / 1000));
+      const secondsUntilExpiry = Math.ceil((oldest + tierRule.windowMs - now) / 1000);
 
       return {
         allowed: false,
         status: 429,
-        limit: config.windowLimit,
+        limit: tierRule.windowLimit,
         remaining: 0,
-        retryAfter,
-        resetSeconds: retryAfter,
+        retryAfter: Math.max(1, secondsUntilExpiry),
+        resetSeconds: Math.max(1, secondsUntilExpiry),
         headers: {
-          'X-RateLimit-Limit': config.windowLimit,
+          'X-RateLimit-Limit': tierRule.windowLimit,
           'X-RateLimit-Remaining': 0,
-          'Retry-After': retryAfter
+          'Retry-After': Math.max(1, secondsUntilExpiry)
         }
       };
     }

@@ -15,16 +15,24 @@
 
 const fs = require('fs');
 const path = require('path');
+const config = require('../config');
 
 class WhiteboardService {
   constructor() {
-    this.boardId = 'main-canvas';
+    this.boardId = config.whiteboard.boardId;
+    this.compactionThreshold = config.whiteboard.compactionThreshold;
+    this.maxOperationLogSize = config.whiteboard.maxOperationLogSize;
+
+    config.on('change:whiteboard', () => {
+      this.boardId = config.whiteboard.boardId;
+      this.compactionThreshold = config.whiteboard.compactionThreshold;
+      this.maxOperationLogSize = config.whiteboard.maxOperationLogSize;
+    });
+
     // Canvas elements: Map of elementId -> elementData (reconstructed current state)
     this.elements = new Map();
     // Monotonic sequence number
     this.sequenceNumber = 0;
-    // Compaction threshold: compact after this many deltas
-    this.compactionThreshold = 50;
     this.deltasSinceSnapshot = 0;
     // Event log of recent operations since last snapshot
     this.operationLog = [];

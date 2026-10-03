@@ -1,6 +1,8 @@
 /**
- * Module 8: Floci Local Cloud Integration Client
- * Provides interactive controls to test S3, SQS, and DynamoDB emulation live!
+ * Module 8: Floci Local Cloud Integration Client & Dynamic Team Development Simulator
+ * 
+ * Provides interactive controls to test S3, SQS, and DynamoDB emulation live,
+ * alongside real-time multi-agent and developer collaborative simulation!
  */
 
 const FlociCloudClient = {
@@ -9,13 +11,34 @@ const FlociCloudClient = {
   currentBucket: 'syslab-cloud-bucket',
   currentQueue: 'syslab-posts-queue',
   currentTable: 'SysLabFlags',
+  teamSimulationActive: true,
+  lastEventId: null,
 
   init() {
-    this.refreshStatus();
+    this.fetchDynamicConfig().then(() => {
+      this.refreshStatus();
+      this.pollTeamActivity();
+      this.loadS3Objects();
+      this.loadQueues();
+      this.scanDynamoDB();
+    });
     setInterval(() => this.refreshStatus(), 5000);
+    setInterval(() => this.pollTeamActivity(), 2500);
     this.bindEvents();
-    this.loadS3Objects();
-    this.loadQueues();
+  },
+
+  async fetchDynamicConfig() {
+    try {
+      const res = await fetch('/api/config');
+      const data = await res.json();
+      if (data.success && data.config && data.config.floci) {
+        this.endpoint = data.config.floci.endpoint || this.endpoint;
+        this.uiUrl = data.config.floci.uiUrl || this.uiUrl;
+        this.currentBucket = data.config.floci.defaultBucket || this.currentBucket;
+        this.currentQueue = data.config.floci.defaultQueue || this.currentQueue;
+        this.currentTable = data.config.floci.defaultTable || this.currentTable;
+      }
+    } catch (_) {}
   },
 
   bindEvents() {
@@ -56,6 +79,17 @@ const FlociCloudClient = {
     if (scanDynamoBtn) {
       scanDynamoBtn.addEventListener('click', () => this.scanDynamoDB());
     }
+
+    // Team Simulation actions
+    const toggleTeamBtn = document.getElementById('team-sim-toggle-btn');
+    if (toggleTeamBtn) {
+      toggleTeamBtn.addEventListener('click', () => this.toggleTeamSimulation());
+    }
+
+    const burstTeamBtn = document.getElementById('team-sprint-burst-btn');
+    if (burstTeamBtn) {
+      burstTeamBtn.addEventListener('click', () => this.triggerTeamBurst());
+    }
   },
 
   async refreshStatus() {
@@ -95,6 +129,95 @@ const FlociCloudClient = {
         if (countEl) countEl.textContent = '0 Services';
       }
     } catch (_) {}
+  },
+
+  async pollTeamActivity() {
+    try {
+      const res = await fetch('/api/team/status');
+      const data = await res.json();
+      
+      this.teamSimulationActive = data.isActive;
+      const toggleBtn = document.getElementById('team-sim-toggle-btn');
+      if (toggleBtn) {
+        if (data.isActive) {
+          toggleBtn.className = 'btn btn-primary';
+          toggleBtn.style.background = '#10b981';
+          toggleBtn.textContent = '⏸ Pause Team Simulation';
+        } else {
+          toggleBtn.className = 'btn btn-secondary';
+          toggleBtn.style.background = '';
+          toggleBtn.textContent = '▶ Resume Team Simulation';
+        }
+      }
+
+      const tickerList = document.getElementById('team-activity-ticker');
+      if (tickerList && data.recentEvents && data.recentEvents.length > 0) {
+        const topEvent = data.recentEvents[0];
+        if (topEvent.id !== this.lastEventId) {
+          this.lastEventId = topEvent.id;
+          // Auto-refresh S3 and DynamoDB views to keep UI dynamic
+          if (topEvent.action === 'storage_upload') this.loadS3Objects();
+          if (topEvent.action === 'flag_evaluation') this.scanDynamoDB();
+        }
+
+        tickerList.innerHTML = data.recentEvents.slice(0, 8).map(evt => {
+          const avatar = evt.member ? evt.member.avatar : '👥';
+          const name = evt.member ? evt.member.name : 'Team';
+          return `
+            <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px;">
+              <span style="font-size:14px;">${avatar}</span>
+              <span style="color:var(--text-secondary); font-family:var(--font-mono); font-size:10px;">[${evt.timestamp}]</span>
+              <strong style="color:var(--accent-primary); font-size:11px;">${name}:</strong>
+              <span style="color:#e2e8f0; flex:1;">${evt.description}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const membersEl = document.getElementById('team-members-pills');
+      if (membersEl && data.teamMembers) {
+        membersEl.innerHTML = data.teamMembers.map(m => `
+          <span style="display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:3px 10px; font-size:11px;">
+            <span>${m.avatar}</span>
+            <span style="font-weight:600; color:#fff;">${m.name}</span>
+            <span style="color:var(--text-secondary); font-size:10px;">(${m.role})</span>
+          </span>
+        `).join(' ');
+      }
+    } catch (_) {}
+  },
+
+  async toggleTeamSimulation() {
+    try {
+      const newState = !this.teamSimulationActive;
+      const res = await fetch('/api/team/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newState })
+      });
+      const data = await res.json();
+      this.teamSimulationActive = data.isActive;
+      this.logConsole(`[TEAM SIMULATION] Status toggled: ${data.isActive ? 'ACTIVE' : 'PAUSED'}`);
+      this.pollTeamActivity();
+    } catch (err) {
+      this.logConsole(`[ERROR] ${err.message}`);
+    }
+  },
+
+  async triggerTeamBurst() {
+    this.logConsole(`⚡ [TEAM SPRINT BURST] Launching 5 concurrent team actions across Storage, SQS, Rate Limiting, and DynamoDB...`);
+    try {
+      const res = await fetch('/api/team/burst', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        this.logConsole(`✅ [SPRINT BURST COMPLETE] 5 distributed actions executed concurrently!`);
+        this.pollTeamActivity();
+        this.loadS3Objects();
+        this.scanDynamoDB();
+      }
+    } catch (err) {
+      this.logConsole(`[ERROR] ${err.message}`);
+    }
   },
 
   async syncS3() {
@@ -256,7 +379,6 @@ const FlociCloudClient = {
   },
 
   async scanDynamoDB() {
-    this.logConsole(`[DYNAMODB] Executing Scan on table '${this.currentTable}'...`);
     try {
       const res = await fetch(`/api/floci/dynamodb/scan?tableName=${this.currentTable}`);
       const data = await res.json();
@@ -268,7 +390,6 @@ const FlociCloudClient = {
         return;
       }
 
-      this.logConsole(`[DYNAMODB] Scan retrieved ${data.items.length} items from '${this.currentTable}'.`);
       listEl.innerHTML = data.items.map(item => `
         <div style="padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px; font-family:var(--font-mono); font-size:12px;">
           <div style="display:flex; justify-content:space-between; margin-bottom:4px;">

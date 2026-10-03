@@ -19,10 +19,17 @@
  *    Avoids slow OFFSET scans and page drift by querying `WHERE id < cursor LIMIT N`.
  */
 
+const config = require('../config');
+
 class ActivityFeedService {
   constructor() {
-    this.fanOutMode = 'hybrid'; // 'push' | 'pull' | 'hybrid'
-    this.celebrityFollowerThreshold = 5; // Anyone with > 5 followers is treated as celebrity in hybrid mode
+    this.fanOutMode = config.feed.fanOutMode;
+    this.celebrityFollowerThreshold = config.feed.celebrityThreshold;
+
+    config.on('change:feed', () => {
+      this.fanOutMode = config.feed.fanOutMode;
+      this.celebrityFollowerThreshold = config.feed.celebrityThreshold;
+    });
 
     // Master Event Store: eventId -> eventObject
     this.events = new Map();
@@ -148,15 +155,18 @@ class ActivityFeedService {
     }
 
     if (writeStrategy === 'push') {
+      const maxInbox = config.feed.maxInboxSize || 200;
       // Fan-Out on Write: push eventId to every follower's inbox
       followerList.forEach(followerId => {
         if (!this.inboxes.has(followerId)) this.inboxes.set(followerId, []);
         this.inboxes.get(followerId).unshift(eventId);
+        if (this.inboxes.get(followerId).length > maxInbox) this.inboxes.get(followerId).pop();
         this.metrics.fanOutWritesCount++;
       });
       // Also push to actor's own inbox
       if (!this.inboxes.has(actor)) this.inboxes.set(actor, []);
       this.inboxes.get(actor).unshift(eventId);
+      if (this.inboxes.get(actor).length > maxInbox) this.inboxes.get(actor).pop();
     }
 
     return {
@@ -170,7 +180,7 @@ class ActivityFeedService {
   /**
    * Fetch timeline for user using Cursor-Based Pagination
    */
-  getFeed(userId = 'alice', limit = 10, cursor = null) {
+  getFeed(userId = 'alice', limit = (config.feed.defaultFeedLimit || 10), cursor = null) {
     this.metrics.fanOutReadsCount++;
     let feedEventIds = [];
 
