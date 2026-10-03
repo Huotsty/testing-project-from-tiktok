@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: syslab-platform
+    env: node
+    plan: standard
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: HOST
+        value: 0.0.0.0
+    disk:
+      name: syslab-data
+      mountPath: /app/server/data
+      sizeGB: 10

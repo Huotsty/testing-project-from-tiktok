@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SysLab: Interactive System Design Workbench</title>
+  <meta name="description" content="An interactive full-stack system design workbench combining 6 core distributed system archetypes: WebSockets, Feature Flags, Delayed Queues, Rate Limiting, Fan-Out Feeds, and Chunked Object Storage.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-text">
+        <h1>SysLab ArchitectOS</h1>
+        <span>Distributed Systems Interactive Lab</span>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap: 1rem;">
+      <div class="system-status-pill">
+        <span class="pulse-dot"></span>
+        <span>6/6 SERVICES RUNNING</span>
+      </div>
+      <div style="font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);">
+        Uptime: <span id="global-uptime" style="color:#fff;">0m 0s</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Module Navigation Tabs -->
+  <nav class="nav-tabs" role="tablist">
+    <button class="tab-btn active" data-tab="tab-overview" id="nav-tab-overview" role="tab">
+      <span>🌐 System Overview</span>
+      <span class="tab-badge">Topology</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-whiteboard" id="nav-tab-whiteboard" role="tab">
+      <span>🎨 1. Whiteboard</span>
+      <span class="tab-badge">WebSockets Delta</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-flags" id="nav-tab-flags" role="tab">
+      <span>🚩 2. Feature Flags</span>
+      <span class="tab-badge">SSE & Local Eval</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-scheduler" id="nav-tab-scheduler" role="tab">
+      <span>⏰ 3. Post Scheduler</span>
+      <span class="tab-badge">Idempotency & DLQ</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-ratelimit" id="nav-tab-ratelimit" role="tab">
+      <span>🛡️ 4. API Rate Limiter</span>
+      <span class="tab-badge">Token Bucket</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-feed" id="nav-tab-feed" role="tab">
+      <span>📰 5. Activity Feed</span>
+      <span class="tab-badge">Fan-Out & Cursors</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-storage" id="nav-tab-storage" role="tab">
+      <span>📦 6. Object Storage</span>
+      <span class="tab-badge">S3 Chunks & RF=2</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-scalability" id="nav-tab-scalability" role="tab" style="background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.4);">
+      <span>🎓 7. Scale to 10M & FAANG Drill</span>
+      <span class="tab-badge" style="background: var(--accent-primary); color: #fff;">Interviews</span>
+    </button>
+  </nav>
+
+  <!-- Main Work Area -->
+  <main class="main-content">
+
+    <!-- ==================================================== -->
+    <!-- TAB 0: SYSTEM OVERVIEW & ARCHITECTURE TOPOLOGY       -->
+    <!-- ==================================================== -->
+    <section class="tab-pane active" id="tab-overview" role="tabpanel">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div class="card-title">
+            <span>Unified Distributed Architecture Diagram</span>
+            <span class="system-tag">INTERACTIVE TOPOLOGY</span>
+          </div>
+        </div>
+
+        <div class="arch-diagram-wrapper">
+          <div class="arch-boxes">
+            <div class="arch-node">
+              <div style="font-size:1.5rem;">💻</div>
+              <div class="arch-node-title">Clients & Browsers</div>
+              <div class="arch-node-desc">Multi-user Canvas, Admin Portal, SDK</div>
+            </div>
+            <div class="arch-arrow">➔</div>
+
+            <div class="arch-node" style="border-color: rgba(6, 182, 212, 0.4);">
+              <div style="font-size:1.5rem;">🛡️</div>
+              <div class="arch-node-title">API Rate Limiter</div>
+              <div class="arch-node-desc">Token Bucket & Sliding Window Shield</div>
+            </div>
+            <div class="arch-arrow">➔</div>
+
+            <div class="arch-node" style="border-color: rgba(99, 102, 241, 0.4);">
+              <div style="font-size:1.5rem;">⚡</div>
+              <div class="arch-node-title">Core App Services</div>
+              <div class="arch-node-desc">WebSockets Delta Sync & SSE Stream</div>
+            </div>
+            <div class="arch-arrow">➔</div>
+
+            <div class="arch-node" style="border-color: rgba(245, 158, 11, 0.4);">
+              <div style="font-size:1.5rem;">⏰</div>
+              <div class="arch-node-title">Delayed Scheduler</div>
+              <div class="arch-node-desc">Idempotency Index & Worker Queue</div>
+            </div>
+            <div class="arch-arrow">➔</div>
+
+            <div class="arch-node" style="border-color: rgba(16, 185, 129, 0.4);">
+              <div style="font-size:1.5rem;">📦</div>
+              <div class="arch-node-title">S3-Lite Storage Cluster</div>
+              <div class="arch-node-desc">Chunk Nodes A/B/C (Replication Factor 2)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="concept-callout">
+          <h4>💡 Why Combine These 6 Systems?</h4>
+          <p>
+            Real-world hyper-scale architectures (Figma, Notion, Twitter/X, Stripe, GitHub, AWS) are built from these exact 6 foundational primitives.
+            Instead of memorizing static interview slides, explore them hands-on with live telemetry, failure injection, and real-time metric counters.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <div class="telemetry-box">
+            <div class="telemetry-label">🎨 Whiteboard Deltas</div>
+            <div class="telemetry-val highlight" id="ov-wb-deltas">0</div>
+            <div class="telemetry-sub">Incremental WebSocket operations</div>
+          </div>
+          <div class="telemetry-box">
+            <div class="telemetry-label">🚩 Active Feature Flags</div>
+            <div class="telemetry-val" id="ov-flags-count">0</div>
+            <div class="telemetry-sub">In-memory evaluations & SSE stream</div>
+          </div>
+          <div class="telemetry-box">
+            <div class="telemetry-label">⏰ Scheduled Posts</div>
+            <div class="telemetry-val" id="ov-sched-jobs">0</div>
+            <div class="telemetry-sub">Delayed jobs & idempotency keys</div>
+          </div>
+          <div class="telemetry-box">
+            <div class="telemetry-label">🛡️ Rate Limited API Calls</div>
+            <div class="telemetry-val" id="ov-rate-reqs">0</div>
+            <div class="telemetry-sub">Token bucket evaluations & 429 guards</div>
+          </div>
+          <div class="telemetry-box">
+            <div class="telemetry-label">📰 Activity Feed Events</div>
+            <div class="telemetry-val" id="ov-feed-events">0</div>
+            <div class="telemetry-sub">Fan-Out on Write & Read streams</div>
+          </div>
+          <div class="telemetry-box">
+            <div class="telemetry-label">📦 Stored Object Chunks</div>
+            <div class="telemetry-val" id="ov-s3-chunks">0</div>
+            <div class="telemetry-sub">Distributed across replicated nodes</div>
+          </div>
+        </div>
+
+        <!-- Interactive End-to-End Pipeline Card -->
+        <div class="card" style="margin-top: 1.5rem; border-color: rgba(99, 102, 241, 0.4);">
+          <div class="card-header">
+            <div class="card-title">
+              <span>⚡ Unified End-to-End System Lifecycle Simulator</span>
+              <span class="system-tag" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success);">FULL-STACK ORCHESTRATION</span>
+            </div>
+            <button class="btn btn-primary" id="btn-run-unified-pipeline" style="padding: 0.5rem 1.25rem;">
+              🚀 Execute Unified Pipeline (All 6 Systems)
+            </button>
+          </div>
+
+          <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.6;">
+            Demonstrates how all 6 systems work together in a realistic engineering workflow:
+            <span style="color:#fff;">[1. Rate Limiter Gateway]</span> ➔ 
+            <span style="color:#fff;">[2. Feature Flag In-Memory Eval]</span> ➔ 
+            <span style="color:#fff;">[3. Collaborative Canvas Delta]</span> ➔ 
+            <span style="color:#fff;">[4. S3-Lite Chunked Replication]</span> ➔ 
+            <span style="color:#fff;">[5. Delayed Queue & Idempotency Check]</span> ➔ 
+            <span style="color:#fff;">[6. Activity Feed Fan-Out]</span>.
+          </div>
+
+          <div id="unified-pipeline-output" style="background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; min-height: 100px;">
+            <div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 1.5rem;">
+              Click "Execute Unified Pipeline" above to trigger and inspect the synchronized 6-system lifecycle in real time.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 1: COLLABORATIVE WHITEBOARD                      -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-whiteboard" role="tabpanel">
+      <div class="concept-callout">
+        <h4>🎨 System Design Core: Real-Time Collaborative Canvas</h4>
+        <ul>
+          <li><strong>Delta-State Sync:</strong> Only strokes and mutation events are sent over WebSockets (~80 bytes) rather than the entire 500KB canvas bitmap, saving 98%+ bandwidth.</li>
+          <li><strong>Monotonic Sequence IDs:</strong> Every delta is stamped with an incrementing <code>seq</code> number so clients can detect dropped packets or packet reordering.</li>
+          <li><strong>Compaction & Snapshots:</strong> Every 50 operations, the server compacts history into a snapshot to ensure newly joining users hydrate in 1 round-trip.</li>
+          <li><strong>Ephemeral Presence:</strong> Live cursor positions are broadcast to peers without hitting disk storage.</li>
+        </ul>
+      </div>
+
+      <div class="grid-2">
+        <!-- Canvas Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Live Shared Canvas</span>
+              <span id="whiteboard-ws-status" class="system-status-pill">CONNECTING...</span>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);">
+              Current Seq: <span id="whiteboard-seq-num" style="color:var(--accent-secondary); font-weight:700;">#0</span>
+            </div>
+          </div>
+
+          <div class="canvas-wrapper">
+            <div class="canvas-toolbar">
+              <button class="tool-btn active" data-tool="pen" id="tool-pen" title="Freehand Stroke">✏️</button>
+              <button class="tool-btn" data-tool="sticky" id="tool-sticky" title="Add Sticky Note">📝</button>
+              <input type="color" id="whiteboard-color-picker" class="color-picker" value="#6366f1" title="Stroke Color">
+              <button class="btn btn-danger btn-sm" id="whiteboard-clear-btn" style="margin-left:8px;">Clear</button>
+            </div>
+            <canvas id="whiteboard-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Canvas Telemetry & Diagnostics -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Bandwidth & Delta Telemetry</span>
+              <span class="system-tag">WEBSOCKET METRICS</span>
+            </div>
+          </div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-box">
+              <div class="telemetry-label">Delta Bytes Sent</div>
+              <div class="telemetry-val" id="wb-delta-bytes">0 KB</div>
+              <div class="telemetry-sub">Tiny serialized operations</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Bandwidth Saved</div>
+              <div class="telemetry-val highlight" id="wb-saved-percent">0%</div>
+              <div class="telemetry-sub">vs full canvas resends</div>
+            </div>
+          </div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-box">
+              <div class="telemetry-label">Snapshots Created</div>
+              <div class="telemetry-val" id="wb-snapshots-count">0</div>
+              <div class="telemetry-sub">Log compaction cycles</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Active Elements</div>
+              <div class="telemetry-val" id="wb-elements-count">0</div>
+              <div class="telemetry-sub">Objects in memory</div>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem; margin-top:1rem;">
+            <h5 style="color:#fff; font-size:13px; margin-bottom:8px;">💡 System Design Tip: Multi-User Concurrency</h5>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">
+              In production apps like Google Docs or Figma, conflicts are handled using either <strong>Operational Transformation (OT)</strong> or <strong>Conflict-free Replicated Data Types (CRDTs)</strong>.
+              In this canvas, we use deterministic sequential ordering (Last-Write-Wins with immutable delta elements) for high-framerate multi-user drawing.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 2: FEATURE FLAGS                                 -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-flags" role="tabpanel">
+      <div class="concept-callout">
+        <h4>🚩 System Design Core: Feature Flag Engine</h4>
+        <ul>
+          <li><strong>Sub-Millisecond In-Memory Reads:</strong> Never make a network call on <code>if (flags.isEnabled())</code>. The client SDK caches configs locally and evaluates them in <strong>&lt;0.05ms</strong>.</li>
+          <li><strong>Server-Sent Events (SSE) Streaming:</strong> When an admin toggles a flag, the change is streamed to all connected clients over SSE instantly.</li>
+          <li><strong>Consistent Hashing Rollouts:</strong> <code>hash(userId + flagKey) % 100 &lt; rolloutPercent</code> ensures the exact same user always gets the exact same feature variation without storing user state.</li>
+        </ul>
+      </div>
+
+      <div class="grid-2">
+        <!-- Flags Management -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Central Flag Control Plane</span>
+              <span id="flags-sse-status" class="system-status-pill">STREAM ACTIVE</span>
+            </div>
+            <span id="flags-version-badge" class="system-tag">Config v1</span>
+          </div>
+
+          <div id="flags-list-container">
+            <!-- Dynamic flag rows rendered by featureFlags.js -->
+          </div>
+
+          <!-- Add new flag form -->
+          <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border-color);">
+            <h5 style="font-size:13px; color:#fff; margin-bottom:0.75rem;">Create New Feature Flag</h5>
+            <form id="create-flag-form">
+              <div class="form-group">
+                <input type="text" id="new-flag-key" class="form-input" placeholder="Flag Key (e.g. beta_chat_v2)" required>
+              </div>
+              <div class="form-group">
+                <input type="text" id="new-flag-name" class="form-input" placeholder="Friendly Name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rollout Percentage (0 - 100%)</label>
+                <input type="number" id="new-flag-rollout" class="form-input" min="0" max="100" value="50">
+              </div>
+              <button type="submit" class="btn btn-primary" id="btn-create-flag">Create & Broadcast Flag</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- SDK Local Evaluation Simulator & SSE Stream Terminal -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>In-Memory SDK Evaluation Tester</span>
+              <span class="system-tag">&lt;0.1ms BENCHMARK</span>
+            </div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem;">
+            <div class="form-group">
+              <label class="form-label">Flag to Evaluate</label>
+              <select id="flags-eval-key" class="form-select">
+                <option value="whiteboard_ai_assistant">whiteboard_ai_assistant</option>
+                <option value="dark_neon_theme">dark_neon_theme</option>
+                <option value="storage_chunk_compression">storage_chunk_compression</option>
+                <option value="experimental_post_scheduler_dlq">experimental_post_scheduler_dlq</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Simulated User ID (Consistent Hashing)</label>
+              <input type="text" id="flags-eval-user" class="form-input" value="architect_99">
+            </div>
+            <button class="btn btn-secondary" id="flags-eval-test-btn">Evaluate In-Memory</button>
+
+            <div id="flags-eval-result" style="margin-top:1rem; padding:0.75rem; background:rgba(0,0,0,0.4); border-radius:6px; min-height:50px;">
+              <span style="color:var(--text-muted); font-size:12px;">Click "Evaluate In-Memory" to test instant local evaluation.</span>
+            </div>
+          </div>
+
+          <div class="card-header" style="margin-top:1.5rem;">
+            <div class="card-title" style="font-size:0.95rem;">
+              <span>SSE Invalidation Stream Event Log</span>
+            </div>
+          </div>
+          <div class="terminal-window" id="flags-sse-log">
+            <!-- Dynamic stream logs -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 3: POST SCHEDULER                                -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-scheduler" role="tabpanel">
+      <div class="concept-callout">
+        <h4>⏰ System Design Core: Delayed Queues & Idempotency</h4>
+        <ul>
+          <li><strong>Idempotency Keys:</strong> If a client network request times out, retrying with the same <code>idempotencyKey</code> returns the existing job without creating duplicate social posts.</li>
+          <li><strong>Delayed Priority Queue:</strong> Jobs are stored with future timestamps (<code>scheduledAt</code>). A background worker tick pulls and locks due jobs.</li>
+          <li><strong>Exponential Backoff Retries:</strong> Transient downstream API errors trigger automatic retries (2s, 4s, 8s).</li>
+          <li><strong>Dead-Letter Queue (DLQ):</strong> Poison pills that fail 3 times are moved to DLQ for manual inspection, preventing head-of-line blocking.</li>
+        </ul>
+      </div>
+
+      <div class="grid-2">
+        <!-- Scheduler Form & Tests -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Schedule a Social Post</span>
+              <span class="system-tag">DELAYED QUEUE</span>
+            </div>
+          </div>
+
+          <form id="schedule-post-form">
+            <div class="form-group">
+              <label class="form-label">Post Content</label>
+              <textarea id="post-content-input" class="form-textarea" rows="2" placeholder="Announcing our latest system release..." required></textarea>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select id="post-platform-select" class="form-select">
+                  <option value="Twitter / X">Twitter / X</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="GitHub Discussions">GitHub Discussions</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Delay (Seconds)</label>
+                <input type="number" id="post-delay-input" class="form-input" min="2" max="60" value="8">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Custom Idempotency Key (Optional)</label>
+              <input type="text" id="post-idempotency-input" class="form-input" placeholder="e.g. req-abc-123 (auto-generated if empty)">
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-schedule-post">Queue Post</button>
+          </form>
+
+          <!-- Idempotency Test Simulator -->
+          <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border-color);">
+            <h5 style="color:#fff; font-size:13px; margin-bottom:6px;">⚡ Idempotency Network Double-Click Test</h5>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+              Fires 2 identical requests concurrently with the same idempotency key to test deduplication.
+            </p>
+            <button class="btn btn-secondary" id="test-idempotency-burst-btn">Simulate Duplicate Retries</button>
+            <div id="idempotency-test-output"></div>
+          </div>
+
+          <!-- Chaos Failure Rate Slider -->
+          <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h5 style="color:#fff; font-size:13px;">Chaos: Downstream API Failure Rate</h5>
+              <span id="scheduler-failure-rate-val" style="font-family:var(--font-mono); color:var(--accent-danger);">0%</span>
+            </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:2px; margin-bottom:6px;">
+              Increase failure rate to watch worker exponential backoff retries and DLQ transitions.
+            </p>
+            <input type="range" id="scheduler-failure-rate-slider" min="0" max="1" step="0.25" value="0" style="width:100%;">
+          </div>
+        </div>
+
+        <!-- Jobs List & Telemetry -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Active Job Queue & DLQ</span>
+              <span class="system-tag">WORKER POOL</span>
+            </div>
+          </div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-box">
+              <div class="telemetry-label">Queued</div>
+              <div class="telemetry-val" id="sched-queued-count">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Published</div>
+              <div class="telemetry-val highlight" id="sched-published-count">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Deduplicated</div>
+              <div class="telemetry-val" id="sched-dedupe-count" style="color:var(--accent-warning);">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">DLQ Poison</div>
+              <div class="telemetry-val" id="sched-dlq-count" style="color:var(--accent-danger);">0</div>
+            </div>
+          </div>
+
+          <div id="scheduler-jobs-list" style="max-height: 250px; overflow-y: auto;">
+            <!-- Jobs rendered by postScheduler.js -->
+          </div>
+
+          <div class="card-header" style="margin-top:1rem;">
+            <div class="card-title" style="font-size:0.95rem;">Worker Audit Ticker</div>
+          </div>
+          <div class="terminal-window" id="scheduler-audit-terminal" style="height:140px;">
+            <!-- Audit logs -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 4: API RATE LIMITER                              -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-ratelimit" role="tabpanel">
+      <div class="concept-callout">
+        <h4>🛡️ System Design Core: API Rate Limiter Gateway</h4>
+        <ul>
+          <li><strong>Token Bucket:</strong> Tokens refill smoothly at rate $R$ up to capacity $C$. Allows short burst traffic up to bucket capacity, then meters at steady refill rate.</li>
+          <li><strong>Sliding Window Counter:</strong> Tracks request timestamps over rolling window $W$, preventing edge-burst 2x rate spikes across fixed window boundaries.</li>
+          <li><strong>Standard RFC Headers:</strong> Returns <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, and <code>Retry-After: 429</code>.</li>
+        </ul>
+      </div>
+
+      <div class="grid-2">
+        <!-- Visualizer & Controls -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Token Bucket Visualizer</span>
+              <span class="system-tag">LIVE DRAIN & REFILL</span>
+            </div>
+          </div>
+
+          <div class="bucket-container">
+            <div class="bucket-visual">
+              <div class="bucket-water" id="bucket-water-fill" style="height: 100%;"></div>
+              <div class="bucket-tokens-text" id="bucket-tokens-display">5 / 5</div>
+            </div>
+            <div style="font-size:12px; color:var(--accent-secondary); margin-top:10px; font-family:var(--font-mono);" id="bucket-refill-rate">
+              Refills +0.5 tokens/sec
+            </div>
+          </div>
+
+          <div style="margin-bottom:1rem;">
+            <label class="form-label">Sliding Window Rolling Usage (15s Window)</label>
+            <div style="width:100%; height:12px; background:rgba(0,0,0,0.4); border-radius:6px; overflow:hidden; border:1px solid var(--border-color);">
+              <div id="sliding-window-fill" style="width:0%; height:100%; background:var(--accent-secondary); transition:width 0.3s;"></div>
+            </div>
+            <div id="sliding-window-display" style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:4px;">
+              0 / 5 requests
+            </div>
+          </div>
+
+          <!-- Configuration & Tiers -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding-top:1rem; border-top:1px solid var(--border-color);">
+            <div>
+              <label class="form-label">Algorithm</label>
+              <div style="display:flex; gap:10px; font-size:13px;">
+                <label><input type="radio" name="rl-algo" value="token_bucket" checked> Token Bucket</label>
+                <label><input type="radio" name="rl-algo" value="sliding_window"> Sliding Window</label>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Client Tier</label>
+              <div style="display:flex; gap:10px; font-size:13px;">
+                <label><input type="radio" name="rl-tier" value="free" checked> Free (5/15s)</label>
+                <label><input type="radio" name="rl-tier" value="pro"> Pro (20/15s)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenAI Gateway Tester & Request Logs -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>OpenAI API Rate-Limited Gateway</span>
+              <span class="system-tag">HTTP 429 BENCH</span>
+            </div>
+          </div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-box">
+              <div class="telemetry-label">Total Calls</div>
+              <div class="telemetry-val" id="rl-total-reqs">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Allowed (200)</div>
+              <div class="telemetry-val highlight" id="rl-allowed-reqs">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Blocked (429)</div>
+              <div class="telemetry-val" id="rl-blocked-reqs" style="color:var(--accent-danger);">0</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Prompt to OpenAI Mock Endpoint</label>
+            <input type="text" id="openai-prompt-input" class="form-input" value="Explain how token bucket handles traffic bursts.">
+          </div>
+
+          <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
+            <button class="btn btn-primary" id="rl-single-req-btn">Send 1 Request</button>
+            <button class="btn btn-danger" id="rl-burst-req-btn">⚡ Fire Burst of 8 Requests</button>
+          </div>
+
+          <div id="openai-response-output" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:0.85rem; min-height:60px; margin-bottom:1rem;">
+            <span style="color:var(--text-muted); font-size:12px;">Trigger a request to inspect response & rate limit headers.</span>
+          </div>
+
+          <div class="card-header">
+            <div class="card-title" style="font-size:0.95rem;">Live Gateway Request Trace</div>
+          </div>
+          <div class="terminal-window" id="ratelimit-trace-terminal" style="height:140px;">
+            <!-- Rate limit traces -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 5: ACTIVITY FEED                                 -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-feed" role="tabpanel">
+      <div class="concept-callout">
+        <h4>📰 System Design Core: Activity Feed & Fan-Out Architectures</h4>
+        <ul>
+          <li><strong>Fan-Out on Write (Push):</strong> Write event directly to all followers' inboxes. Read is instantaneous $O(1)$, but writing to a celebrity with 10M followers causes write amplification.</li>
+          <li><strong>Fan-Out on Read (Pull):</strong> Store events only on author's stream. Followers pull and merge-sort on demand. Write is $O(1)$, but reading is heavy $O(K \log K)$.</li>
+          <li><strong>Hybrid Mode:</strong> Standard users use Fan-Out on Write; celebrities (>5 followers in this lab) use Fan-Out on Read.</li>
+          <li><strong>Cursor Pagination:</strong> Avoids database <code>OFFSET</code> performance degradation by paginating via timestamp/ID cursors.</li>
+        </ul>
+      </div>
+
+      <div class="grid-2">
+        <!-- Feed Stream -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Personalized Activity Timeline</span>
+              <span id="feed-current-mode-badge" class="system-tag">MODE: HYBRID</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:12px; color:var(--text-secondary);">User:</span>
+              <select id="feed-user-select" class="form-select" style="width:auto; padding:0.25rem 0.5rem;">
+                <option value="alice">Alice (Follows Linus, Bob)</option>
+                <option value="bob">Bob (Follows Linus, Alice)</option>
+                <option value="linus">Linus (Celebrity)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="feed-stream-container" style="max-height: 400px; overflow-y: auto;">
+            <!-- Feed items rendered by activityFeed.js -->
+          </div>
+
+          <div style="text-align:center; padding:0.75rem;">
+            <button class="btn btn-secondary btn-sm" id="feed-load-more-btn">Load Older Events (Cursor Pagination)</button>
+          </div>
+        </div>
+
+        <!-- Fan-Out Controls & Benchmark -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Fan-Out Strategy & Ingestion</span>
+              <span class="system-tag">PUSH VS PULL</span>
+            </div>
+          </div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-box">
+              <div class="telemetry-label">Ingested Events</div>
+              <div class="telemetry-val" id="feed-total-events">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Inbox Writes</div>
+              <div class="telemetry-val highlight" id="feed-fanout-writes">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Feed Reads</div>
+              <div class="telemetry-val" id="feed-fanout-reads">0</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Active Fan-Out Delivery Strategy</label>
+            <select id="feed-mode-select" class="form-select">
+              <option value="hybrid" selected>Hybrid (Celebrity Pull + Regular Push)</option>
+              <option value="push">Fan-Out on Write (Push to all inboxes)</option>
+              <option value="pull">Fan-Out on Read (Pull & merge on demand)</option>
+            </select>
+          </div>
+
+          <!-- Ingest Custom Event -->
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem;">
+            <h5 style="color:#fff; font-size:13px; margin-bottom:8px;">Ingest Activity Event</h5>
+            <form id="feed-ingest-form">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;" class="form-group">
+                <input type="text" id="feed-event-actor" class="form-input" placeholder="Actor (e.g. linus)" value="linus">
+                <select id="feed-event-action" class="form-select">
+                  <option value="git_commit">Git Commit</option>
+                  <option value="pull_request">Pull Request</option>
+                  <option value="release_published">Release</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <input type="text" id="feed-event-repo" class="form-input" placeholder="Repository" value="torvalds/linux">
+              </div>
+              <div class="form-group">
+                <input type="text" id="feed-event-title" class="form-input" placeholder="Event Description / Commit Message" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm" id="btn-ingest-event">Ingest Event</button>
+            </form>
+          </div>
+
+          <!-- Live Benchmark -->
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h5 style="color:#fff; font-size:13px;">System Design Benchmark</h5>
+              <button class="btn btn-secondary btn-sm" id="feed-run-bench-btn">Run 100x50 Benchmark</button>
+            </div>
+            <div id="feed-benchmark-output" style="margin-top:8px;">
+              <span style="color:var(--text-muted); font-size:11px;">Click to benchmark computational cost of Push vs Pull.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 6: OBJECT STORAGE (S3-LITE)                      -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-storage" role="tabpanel">
+      <div class="concept-callout">
+        <h4>📦 System Design Core: Distributed Chunked Object Storage (S3-Lite)</h4>
+        <ul>
+          <li><strong>Metadata vs Chunk Separation:</strong> Metadata (filename, size, MIME type, chunk manifest) is stored separately from raw binary chunks.</li>
+          <li><strong>Content-Addressable Storage (CAS):</strong> Chunks are keyed by their SHA-256 hashes, enabling automatic deduplication across files.</li>
+          <li><strong>Replication Factor 2:</strong> Every chunk is placed on 2 distinct storage nodes.</li>
+          <li><strong>Fault Tolerance & Failover:</strong> Simulate a crash on Storage Node A. Reading a file automatically fails over to replica Node B or Node C without data loss!</li>
+        </ul>
+      </div>
+
+      <!-- Storage Cluster Nodes Grid -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <div class="card-title">
+            <span>Storage Cluster Node Health & Chaos Testing</span>
+            <span class="system-tag">REPLICATION FACTOR: 2</span>
+          </div>
+        </div>
+
+        <div class="nodes-grid" id="storage-nodes-grid">
+          <!-- Rendered by objectStorage.js -->
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- File Uploader & Storage Catalog -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>S3 Multipart Upload Simulator</span>
+              <span class="system-tag">CHUNK ENGINE</span>
+            </div>
+          </div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-box">
+              <div class="telemetry-label">Files Stored</div>
+              <div class="telemetry-val" id="s3-files-count">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Total Data</div>
+              <div class="telemetry-val highlight" id="s3-bytes-count">0 KB</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Chunks Created</div>
+              <div class="telemetry-val" id="s3-chunks-count">0</div>
+            </div>
+            <div class="telemetry-box">
+              <div class="telemetry-label">Failovers Handled</div>
+              <div class="telemetry-val" id="s3-failovers-count" style="color:var(--accent-warning);">0</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">File Name</label>
+            <input type="text" id="s3-upload-name" class="form-input" value="system-design-blueprint.txt">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Chunk Partition Size (Bytes)</label>
+            <input type="number" id="s3-chunk-size" class="form-input" value="64" min="32" max="1024">
+          </div>
+          <div class="form-group">
+            <label class="form-label">File Content to Chunk & Replicate</label>
+            <textarea id="s3-upload-content" class="form-textarea" rows="3">Distributed Object Storage decomposes large files into content-addressable SHA-256 binary chunks. Each chunk is copied across a hash ring of storage nodes to guarantee 99.99999% durability against physical node crashes.</textarea>
+          </div>
+          <button class="btn btn-primary" id="s3-upload-btn">Chunk, Hash & Store</button>
+        </div>
+
+        <!-- Files List & Failover Inspection -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>Stored Objects & Failover Verifier</span>
+              <span class="system-tag">METADATA CATALOG</span>
+            </div>
+          </div>
+
+          <div id="storage-files-list" style="max-height: 250px; overflow-y: auto;">
+            <!-- File list rendered by objectStorage.js -->
+          </div>
+
+          <div class="card-header" style="margin-top:1.5rem;">
+            <div class="card-title" style="font-size:0.95rem;">
+              <span>Cluster Read Inspection Output</span>
+            </div>
+          </div>
+          <div id="storage-read-output" style="min-height: 120px;">
+            <span style="color:var(--text-muted); font-size:12px;">Click "Read & Verify Failover" on any file to test node failover.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 7: SCALE TO 10M USERS & FAANG INTERVIEW DRILL    -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-scalability" role="tabpanel">
+      <div class="concept-callout">
+        <h4>🎓 Software Engineer Career Accelerator: System Design at Scale</h4>
+        <p>
+          Mastering system design is not about memorizing buzzwords—it is about knowing <strong>why</strong> a single-node design breaks, <strong>when</strong> to introduce distributed primitives, and <strong>how</strong> to articulate trade-offs in FAANG engineering interviews.
+        </p>
+      </div>
+
+      <!-- Part 1: Interactive Scale Calculator -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <div class="card-title">
+            <span>📐 Back-of-the-Envelope Scale Calculator</span>
+            <span class="system-tag">INTERVIEW ESTIMATION TOOL</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem; margin-bottom:1rem;">
+          <div class="form-group">
+            <label class="form-label">Daily Active Users (DAU)</label>
+            <input type="number" id="calc-dau" class="form-input" value="10000000" step="1000000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Actions per User / Day</label>
+            <input type="number" id="calc-actions" class="form-input" value="10" step="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Read to Write Ratio</label>
+            <select id="calc-ratio" class="form-select">
+              <option value="10">10 : 1 (Read Heavy - Twitter/Feed)</option>
+              <option value="1">1 : 1 (Balanced - Whiteboard)</option>
+              <option value="100">100 : 1 (Ultra Read Heavy - Feature Flags)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Avg Payload Size (KB)</label>
+            <input type="number" id="calc-payload" class="form-input" value="2" step="0.5">
+          </div>
+        </div>
+
+        <div class="grid-3" id="calc-results-grid">
+          <div class="telemetry-box">
+            <div class="telemetry-label">Average Write QPS</div>
+            <div class="telemetry-val" id="res-write-qps" style="color:var(--accent-secondary);">1,157 / sec</div>
+            <div class="telemetry-sub">Peak QPS (~2x): <span id="res-peak-qps" style="color:#fff;">2,314 / sec</span></div>
+          </div>
+          <div class="telemetry-box">
+            <div class="telemetry-label">Network Ingress Bandwidth</div>
+            <div class="telemetry-val highlight" id="res-ingress-bw">2.31 MB/s</div>
+            <div class="telemetry-sub">Daily Ingress: <span id="res-daily-ingress" style="color:#fff;">200 GB / day</span></div>
+          </div>
+          <div class="telemetry-box">
+            <div class="telemetry-label">Redis Cache Size (20% Rule)</div>
+            <div class="telemetry-val" id="res-cache-size" style="color:var(--accent-warning);">40 GB RAM</div>
+            <div class="telemetry-sub">Fits easily in single Redis master</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Part 2: Production Scaling Blueprints Table -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🗺️ The 6 Archetypes: Single-Node ➔ Production at Scale (10M+ Users)</span>
+            <span class="system-tag">PRODUCTION ROADMAP</span>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:12px; line-height:1.6;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border-color); text-align:left; color:var(--text-secondary); font-family:var(--font-mono);">
+                <th style="padding:10px;">Module</th>
+                <th style="padding:10px;">In Our SysLab Project</th>
+                <th style="padding:10px;">Production at Scale (10M+ Users)</th>
+                <th style="padding:10px;">Core Scalability Bottleneck Solved</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:10px; font-weight:700; color:#fff;">1. Whiteboard</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--accent-secondary);">In-memory WS + Seq Log</td>
+                <td style="padding:10px;">Redis Pub/Sub WebSocket backplane + Yjs/Automerge CRDTs + Periodic S3 snapshots</td>
+                <td style="padding:10px; color:var(--text-muted);">Horizontal scaling across multiple WebSocket gateway instances without socket-pinning bottlenecks.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:10px; font-weight:700; color:#fff;">2. Feature Flags</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--accent-secondary);">Local SDK Cache + SSE</td>
+                <td style="padding:10px;">Edge CDN Relay Proxies (Cloudflare Workers) + Streaming gRPC + LaunchDarkly Daemon</td>
+                <td style="padding:10px; color:var(--text-muted);">Eliminating 50ms database latency on every API request through zero-network local memory reads.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:10px; font-weight:700; color:#fff;">3. Post Scheduler</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--accent-secondary);">Min-Heap Tick + Idempotency Map</td>
+                <td style="padding:10px;">Redis Sorted Sets (`ZADD timestamp`) + Redlock distributed lock + BullMQ / Temporal + DLQ</td>
+                <td style="padding:10px; color:var(--text-muted);">Preventing double-execution across autoscaled worker pods and surviving network timeouts cleanly.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:10px; font-weight:700; color:#fff;">4. API Rate Limiter</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--accent-secondary);">Token Bucket / Sliding Window</td>
+                <td style="padding:10px;">Redis Lua Scripts (`EVAL` atomic token decrement) + Envoy / Kong API Gateway edge filter</td>
+                <td style="padding:10px; color:var(--text-muted);">Atomic race-condition-free counter decrements without distributed locking overhead.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:10px; font-weight:700; color:#fff;">5. Activity Feed</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--accent-secondary);">Hybrid Push / Pull + Cursors</td>
+                <td style="padding:10px;">Redis Sorted Sets (inbox caching) + Apache Cassandra / ScyllaDB for event logs + Kafka pipeline</td>
+                <td style="padding:10px; color:var(--text-muted);">Eliminating $O(N)$ celebrity write amplification while preserving $O(1)$ fast timeline reads for 99% of users.</td>
+              </tr>
+              <tr>
+                <td style="padding:10px; font-weight:700; color:#fff;">6. Object Storage</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--accent-secondary);">Decoupled Metadata + RF=2 Chunks</td>
+                <td style="padding:10px;">Google Spanner / DynamoDB metadata index + MinIO / Ceph storage daemons + Reed-Solomon Erasure Coding</td>
+                <td style="padding:10px; color:var(--text-muted);">Storing exabytes of blobs reliably with 99.999999999% (11 9's) durability without single-point database bloat.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Part 3: FAANG System Design Interview Questions -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🎯 FAANG Interview Questions Mapped to Each Module</span>
+            <span class="system-tag">INTERVIEW DRILLS</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <h5 style="color:var(--accent-secondary); font-size:13px; margin-bottom:4px;">1. "Design Figma or Google Docs" (Whiteboard)</h5>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.5;">
+              <strong>Interviewer Trap:</strong> "Should we store canvas state in SQL?"<br>
+              <strong>Winning Answer:</strong> Never store rapid stroke deltas directly in SQL. Use WebSockets terminating on a stateful gateway cluster. Transmit immutable mutation deltas using CRDTs or deterministic operational transforms, and flush compacted snapshots to S3 periodically.
+            </p>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <h5 style="color:var(--accent-secondary); font-size:13px; margin-bottom:4px;">2. "Design LaunchDarkly" (Feature Flags)</h5>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.5;">
+              <strong>Interviewer Trap:</strong> "How do you handle 1 million RPS checking flags?"<br>
+              <strong>Winning Answer:</strong> Zero network requests on flag evaluations. The SDK downloads rules once and evaluates in-memory using consistent hashing (<code>hash(userId + key) % 100</code>). Invalidation is pushed via SSE / streaming gRPC.
+            </p>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <h5 style="color:var(--accent-secondary); font-size:13px; margin-bottom:4px;">3. "Design Stripe Webhook Dispatcher / Buffer" (Scheduler)</h5>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.5;">
+              <strong>Interviewer Trap:</strong> "What happens if a worker crashes midway or the merchant endpoint times out?"<br>
+              <strong>Winning Answer:</strong> Enforce idempotency keys on every job. Workers lock jobs via atomic CAS/Redlock with TTL. Transient failures trigger exponential backoff retries (2s, 4s, 8s). Poison pills move to DLQ to avoid head-of-line blocking.
+            </p>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <h5 style="color:var(--accent-secondary); font-size:13px; margin-bottom:4px;">4. "Design Cloudflare / API Gateway Rate Limiter"</h5>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.5;">
+              <strong>Interviewer Trap:</strong> "Fixed window vs Sliding window vs Token bucket?"<br>
+              <strong>Winning Answer:</strong> Fixed window is vulnerable to 2x boundary traffic spikes. Token bucket is ideal for allowing short bursts up to bucket capacity while strictly metering sustained rate. Implement via atomic Redis Lua scripts to prevent read-modify-write race conditions.
+            </p>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <h5 style="color:var(--accent-secondary); font-size:13px; margin-bottom:4px;">5. "Design Twitter / Instagram Activity Feed"</h5>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.5;">
+              <strong>Interviewer Trap:</strong> "Do you push or pull?"<br>
+              <strong>Winning Answer:</strong> Hybrid model! Push (fan-out on write) for 99.9% of users for blazing $O(1)$ read performance. Pull (fan-out on read) for celebrities (e.g. Elon Musk with 180M followers) to avoid freezing message queues with 180 million database writes on every post.
+            </p>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <h5 style="color:var(--accent-secondary); font-size:13px; margin-bottom:4px;">6. "Design Amazon S3 / Google Cloud Storage"</h5>
+            <p style="font-size:12px; color:var(--text-secondary); line-height:1.5;">
+              <strong>Interviewer Trap:</strong> "Where do you store metadata vs files?"<br>
+              <strong>Winning Answer:</strong> Strictly decouple metadata (Spanner/Postgres) from chunk storage (blob disks). Break files into fixed content-addressable SHA-256 chunks. Use consistent hashing rings for chunk placement and Reed-Solomon erasure coding (e.g. 8+4) for storage efficiency over raw 3x replication.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Client JavaScript Modules -->
+  <script src="/js/whiteboard.js"></script>
+  <script src="/js/featureFlags.js"></script>
+  <script src="/js/postScheduler.js"></script>
+  <script src="/js/rateLimiter.js"></script>
+  <script src="/js/activityFeed.js"></script>
+  <script src="/js/objectStorage.js"></script>
+  <script src="/js/app.js"></script>
+
+</body>
+</html>

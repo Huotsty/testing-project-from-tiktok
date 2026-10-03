@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # SysLab Application Service
+  # ==========================================
+  syslab-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: syslab-platform
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - STORAGE_DATA_DIR=/app/server/data/storage_nodes
+      - REDIS_URL=redis://syslab-redis:6379
+    volumes:
+      - syslab_data:/app/server/data
+    depends_on:
+      syslab-redis:
+        condition: service_healthy
+    networks:
+      - syslab-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ==========================================
+  # Redis Distributed Backplane (Scale-Out)
+  # ==========================================
+  syslab-redis:
+    image: redis:7-alpine
+    container_name: syslab-redis-backplane
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - syslab-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+networks:
+  syslab-net:
+    driver: bridge
+
+volumes:
+  syslab_data:
+  redis_data:
