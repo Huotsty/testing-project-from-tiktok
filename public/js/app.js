@@ -18,6 +18,7 @@ const App = {
     RateLimiterClient.init();
     ActivityFeedClient.init();
     ObjectStorageClient.init();
+    FlociCloudClient.init();
 
     // Initialize unified pipeline runner and scale calculator
     this.setupUnifiedPipelineRunner();

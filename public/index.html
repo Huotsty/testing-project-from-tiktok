@@ -64,6 +64,10 @@
       <span>🎓 7. Scale to 10M & FAANG Drill</span>
       <span class="tab-badge" style="background: var(--accent-primary); color: #fff;">Interviews</span>
     </button>
+    <button class="tab-btn" data-tab="tab-floci" id="nav-tab-floci" role="tab" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4);">
+      <span>☁️ 8. Floci Cloud Simulation</span>
+      <span class="tab-badge" style="background: #10b981; color: #fff;">Local AWS</span>
+    </button>
   </nav>
 
   <!-- Main Work Area -->
@@ -981,6 +985,160 @@
       </div>
     </section>
 
+    <!-- ==================================================== -->
+    <!-- TAB 8: FLOCI LOCAL CLOUD SIMULATION                  -->
+    <!-- ==================================================== -->
+    <section class="tab-pane" id="tab-floci" role="tabpanel">
+      <!-- Status & Banner Card -->
+      <div class="card" style="margin-bottom: 1.5rem; border-color: rgba(16, 185, 129, 0.4);">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div class="card-title">
+            <span>☁️ Floci Local Cloud Simulator (AWS Emulation Engine)</span>
+            <span id="floci-status-badge" class="system-tag" style="background:rgba(16, 185, 129, 0.2); color:#10b981; border:1px solid #10b981;">● FLOCI CLOUD ONLINE</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <a id="floci-console-link" href="http://localhost:4500" target="_blank" class="btn btn-secondary" style="background:rgba(16, 185, 129, 0.15); border-color:#10b981; color:#10b981; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-size:12px;">
+              <span>🖥️ Open Floci Web Console (Port 4500)</span>
+            </a>
+            <button class="btn btn-secondary" onclick="FlociCloudClient.refreshStatus()" style="font-size:12px;">🔄 Refresh Status</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-top:1rem;">
+          <div style="background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <div style="color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:1px;">Gateway Endpoint</div>
+            <div style="font-family:var(--font-mono); font-size:14px; color:#10b981; margin-top:4px;">http://localhost:4566</div>
+            <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">Wire-compatible AWS edge port</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <div style="color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:1px;">Active Services</div>
+            <div id="floci-service-count" style="font-family:var(--font-mono); font-size:14px; color:#fff; margin-top:4px;">121 Services Emulated</div>
+            <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">S3, SQS, DynamoDB, Bedrock, etc.</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1rem;">
+            <div style="color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:1px;">Authentication & Cost</div>
+            <div style="font-family:var(--font-mono); font-size:14px; color:#10b981; margin-top:4px;">Zero Auth · $0.00 Cost</div>
+            <div style="color:var(--text-secondary); font-size:11px; margin-top:2px;">No API tokens · No risk of bill shock</div>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border-color);">
+          <div style="color:var(--text-secondary); font-size:11px; margin-bottom:6px;">Emulated AWS Services Highlights:</div>
+          <div id="floci-services-list" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+        </div>
+      </div>
+
+      <!-- 3-Column Cloud Resource Workbenches -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; margin-bottom:1.5rem;">
+        
+        <!-- S3 Object Storage Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🪣 AWS S3 Bucket Simulator</span>
+              <span class="system-tag" style="background:rgba(59, 130, 246, 0.2); color:#60a5fa;">S3 LITE</span>
+            </div>
+          </div>
+          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:1rem;">
+            Replicate SysLab's chunked CAS files into local S3 or upload custom files without AWS credentials.
+          </p>
+
+          <div style="display:flex; gap:8px; margin-bottom:1rem;">
+            <button id="floci-sync-s3-btn" class="btn btn-primary" style="flex:1; font-size:12px;">
+              ⚡ Sync SysLab Storage to S3
+            </button>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:0.75rem; margin-bottom:1rem;">
+            <div style="font-size:12px; font-weight:600; margin-bottom:6px; color:#fff;">Upload Custom File to S3:</div>
+            <input id="floci-s3-file-name" type="text" placeholder="filename.txt" class="input" style="width:100%; margin-bottom:6px; font-size:12px;" value="deployment-plan.txt">
+            <textarea id="floci-s3-file-content" rows="2" class="input" style="width:100%; font-size:12px; margin-bottom:6px;" placeholder="File contents...">Architecture verified on local cloud with Floci!</textarea>
+            <button id="floci-upload-s3-btn" class="btn btn-secondary" style="width:100%; font-size:12px;">📤 Put Object to S3</button>
+          </div>
+
+          <div style="font-size:12px; font-weight:600; margin-bottom:6px; color:var(--text-secondary);">Objects in 'syslab-cloud-bucket':</div>
+          <div id="floci-s3-objects-list" style="max-height:180px; overflow-y:auto;">
+            <div style="color:var(--text-secondary); font-size:12px; padding:10px;">Loading S3 objects...</div>
+          </div>
+        </div>
+
+        <!-- SQS Queue Simulator Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📬 AWS SQS Queue Simulator</span>
+              <span class="system-tag" style="background:rgba(234, 179, 8, 0.2); color:#facc15;">SQS FIFO/STD</span>
+            </div>
+          </div>
+          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:1rem;">
+            Enqueue scheduled social posts into wire-compatible SQS queues. Test polling, dead-lettering, and idempotency.
+          </p>
+
+          <div style="display:flex; gap:8px; margin-bottom:1rem;">
+            <button id="floci-bridge-sqs-btn" class="btn btn-primary" style="flex:1; font-size:12px;">
+              ⚡ Bridge Scheduler to SQS
+            </button>
+            <button id="floci-poll-sqs-btn" class="btn btn-secondary" style="font-size:12px;">
+              📥 Poll Messages
+            </button>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:0.75rem; margin-bottom:1rem;">
+            <div style="font-size:12px; font-weight:600; margin-bottom:6px; color:#fff;">Send Custom SQS Message:</div>
+            <input id="floci-sqs-message-input" type="text" placeholder="Message content..." class="input" style="width:100%; margin-bottom:6px; font-size:12px;" value="User #1042 triggered high-volume export">
+            <button id="floci-send-sqs-btn" class="btn btn-secondary" style="width:100%; font-size:12px;">✉️ Dispatch SQS Message</button>
+          </div>
+
+          <div style="font-size:12px; font-weight:600; margin-bottom:6px; color:var(--text-secondary);">Active SQS Queues:</div>
+          <div id="floci-queues-list" style="max-height:180px; overflow-y:auto;">
+            <div style="font-family:var(--font-mono); font-size:11px; color:#10b981;">http://localhost:4566/000000000000/syslab-posts-queue</div>
+          </div>
+        </div>
+
+        <!-- DynamoDB NoSQL Simulator Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>⚡ AWS DynamoDB Table</span>
+              <span class="system-tag" style="background:rgba(168, 85, 247, 0.2); color:#c084fc;">NoSQL KV</span>
+            </div>
+          </div>
+          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:1rem;">
+            Export dynamic feature flag states and whiteboard vectors to local DynamoDB tables with sub-millisecond lookups.
+          </p>
+
+          <div style="display:flex; gap:8px; margin-bottom:1rem;">
+            <button id="floci-sync-dynamo-btn" class="btn btn-primary" style="flex:1; font-size:12px;">
+              ⚡ Sync Feature Flags
+            </button>
+            <button id="floci-scan-dynamo-btn" class="btn btn-secondary" style="font-size:12px;">
+              🔍 Scan Table
+            </button>
+          </div>
+
+          <div style="font-size:12px; font-weight:600; margin-bottom:6px; color:var(--text-secondary);">Table 'SysLabFlags' Items:</div>
+          <div id="floci-dynamo-items-list" style="max-height:280px; overflow-y:auto;">
+            <div style="color:var(--text-secondary); font-size:12px; padding:10px;">Click "Sync Feature Flags" to populate table.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Live Terminal / Audit Console Card -->
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="card-title">
+            <span>💻 Floci Cloud Activity & Telemetry Log</span>
+            <span class="system-tag">LOCAL PROTOCOL WIRE</span>
+          </div>
+          <button class="btn btn-secondary" onclick="document.getElementById('floci-live-console').innerHTML=''" style="font-size:11px; padding:4px 8px;">Clear Log</button>
+        </div>
+        <div id="floci-live-console" style="background:#0a0c10; border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius-md); padding:1rem; font-family:var(--font-mono); font-size:12px; max-height:220px; overflow-y:auto;">
+          <div style="color:#10b981;">[SYSTEM] Floci Local Cloud Integration initialized on http://localhost:4566. Wire-compatible AWS APIs active.</div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Client JavaScript Modules -->
@@ -990,6 +1148,7 @@
   <script src="/js/rateLimiter.js"></script>
   <script src="/js/activityFeed.js"></script>
   <script src="/js/objectStorage.js"></script>
+  <script src="/js/flociCloud.js"></script>
   <script src="/js/app.js"></script>
 
 </body>

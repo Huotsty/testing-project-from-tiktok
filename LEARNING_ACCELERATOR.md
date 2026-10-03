@@ -56,6 +56,8 @@ Follow this 1-hour-per-day plan:
 | **Day 5** | **Fan-Out on Write vs Read** | Run the 100x50 benchmark. Compare CPU and storage costs of Push vs Pull. Understand why celebrities break Push. | [`activityFeedService.js`](file:///d:/testing%20the%20project/server/services/activityFeedService.js) |
 | **Day 6** | **Chunking & Failover** | Upload a file. See chunks distributed across Node A, B, and C. Kill Node A and watch automatic failover. | [`objectStorageService.js`](file:///d:/testing%20the%20project/server/services/objectStorageService.js) |
 | **Day 7** | **End-to-End Orchestration** | Click "Execute Unified Pipeline" in Tab 0. Use Tab 7 Scale Calculator to calculate 10M DAU capacity. | [`server/index.js`](file:///d:/testing%20the%20project/server/index.js#L375-L530) |
+| **Day 8** | **Local Cloud Simulation** | Open Tab 8 "Floci Cloud". Sync chunked storage to S3, bridge scheduler to SQS, and persist flags in DynamoDB at $0 cost. | [`server/services/flociService.js`](file:///d:/testing%20the%20project/server/services/flociService.js) |
+
 
 ---
 

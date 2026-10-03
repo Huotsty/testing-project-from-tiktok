@@ -22,6 +22,7 @@ const postSchedulerService = require('./services/postSchedulerService');
 const rateLimiterService = require('./services/rateLimiterService');
 const activityFeedService = require('./services/activityFeedService');
 const objectStorageService = require('./services/objectStorageService');
+const flociService = require('./services/flociService');
 
 const app = express();
 const server = http.createServer(app);
@@ -530,7 +531,8 @@ app.post('/api/system/run-unified-pipeline', (req, res) => {
   });
 });
 
-app.get('/api/system/overview', (req, res) => {
+app.get('/api/system/overview', async (req, res) => {
+  const flociHealth = await flociService.getHealth();
   res.json({
     status: 'ONLINE',
     uptime: process.uptime(),
@@ -540,9 +542,105 @@ app.get('/api/system/overview', (req, res) => {
       postScheduler: postSchedulerService.getMetrics(),
       rateLimiter: rateLimiterService.getMetrics(),
       activityFeed: activityFeedService.getMetrics(),
-      objectStorage: objectStorageService.getClusterStatus()
+      objectStorage: objectStorageService.getClusterStatus(),
+      floci: flociHealth
     }
   });
+});
+
+// ==========================================
+// 8. FLOCI LOCAL CLOUD INTEGRATION API
+// ==========================================
+app.get('/api/floci/status', async (req, res) => {
+  const health = await flociService.getHealth();
+  res.json(health);
+});
+
+app.get('/api/floci/s3/list', async (req, res) => {
+  try {
+    const buckets = await flociService.s3ListBuckets();
+    const bucket = req.query.bucket || 'syslab-cloud-bucket';
+    const objects = await flociService.s3ListObjects(bucket);
+    res.json({ success: true, buckets, currentBucket: bucket, objects });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/floci/s3/sync', async (req, res) => {
+  try {
+    const result = await flociService.syncFromSysLabStorage(objectStorageService, req.body.bucket || 'syslab-cloud-bucket');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/floci/s3/upload', async (req, res) => {
+  try {
+    const { bucket = 'syslab-cloud-bucket', filename, content } = req.body;
+    const result = await flociService.s3PutObject(bucket, `uploads/${filename || 'note.txt'}`, content || 'Sample text content');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/floci/sqs/list', async (req, res) => {
+  try {
+    const queues = await flociService.sqsListQueues();
+    res.json({ success: true, queues });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/floci/sqs/bridge', async (req, res) => {
+  try {
+    const result = await flociService.bridgePostScheduler(postSchedulerService, req.body.queueName || 'syslab-posts-queue');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/floci/sqs/send', async (req, res) => {
+  try {
+    const { queueUrl, message } = req.body;
+    const result = await flociService.sqsSendMessage(queueUrl, message);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/floci/sqs/receive', async (req, res) => {
+  try {
+    const { queueUrl } = req.query;
+    if (!queueUrl) return res.status(400).json({ success: false, error: 'queueUrl is required' });
+    const messages = await flociService.sqsReceiveMessages(queueUrl);
+    res.json({ success: true, messages });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/floci/dynamodb/sync', async (req, res) => {
+  try {
+    const result = await flociService.syncFeatureFlags(featureFlagService, req.body.tableName || 'SysLabFlags');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/floci/dynamodb/scan', async (req, res) => {
+  try {
+    const items = await flociService.dynamoScan(req.query.tableName || 'SysLabFlags');
+    res.json({ success: true, tableName: req.query.tableName || 'SysLabFlags', items });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Cloud Liveness & Readiness Probes (Kubernetes / AWS ECS / Render / Cloud Run)

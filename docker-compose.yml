@@ -18,6 +18,10 @@ services:
       - HOST=0.0.0.0
       - STORAGE_DATA_DIR=/app/server/data/storage_nodes
       - REDIS_URL=redis://syslab-redis:6379
+      - AWS_ENDPOINT_URL=http://syslab-floci:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
     volumes:
       - syslab_data:/app/server/data
     depends_on:
@@ -50,6 +54,23 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+
+  # ==========================================
+  # Floci: Local Cloud for AI Agents & Dev (AWS Port 4566)
+  # MIT-licensed, sub-second boot, zero credentials
+  # ==========================================
+  floci:
+    image: floci/floci:latest
+    container_name: syslab-floci
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,dynamodb
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - syslab-net
 
 networks:
   syslab-net:
