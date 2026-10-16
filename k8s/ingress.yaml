@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: syslab-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: syslab-service
+                port:
+                  number: 80
+          - path: /quant
+            pathType: Prefix
+            backend:
+              service:
+                name: quant-service
+                port:
+                  number: 4000

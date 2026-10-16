@@ -4,17 +4,40 @@ An all-in-one interactive full-stack platform combining the **6 core distributed
 
 ---
 
-## 🚀 Quick Start
+## 🏛️ Monorepo Architecture Overview
 
+This unified monorepo integrates distributed systems infrastructure, financial quantitative engines, and Kubernetes container orchestration:
+
+| Subsystem | Directory | Port | Description |
+| :--- | :--- | :--- | :--- |
+| **SysLab ArchitectOS** | Root (`./`) | `:3000` | Distributed systems workbench (Object Storage, Redis Backplane, Floci Cloud, SQS). |
+| **AlphaForge Quant Terminal** | `quant-terminal/` | `:4000` | Institutional algorithmic trading desk (Spot Gold `XAU/USD`, Forex, Crypto, Capital.com & Binance gateways). |
+| **Kubernetes Orchestration** | `k8s/` | Ingress / Cluster | Full production manifests (Deployments, Services, HPA, Ingress, Kustomize). |
+
+---
+
+## 🚀 Unified Quick Start
+
+### 1. Run via Docker Compose (Both Systems Together)
 ```bash
-# 1. Install dependencies
-npm install
+docker compose up --build
+# SysLab:         http://localhost:3000
+# Quant Terminal: http://localhost:4000
+```
 
-# 2. Start the interactive workbench
+### 2. Deploy to Kubernetes
+```bash
+kubectl apply -k k8s/
+```
+
+### 3. Run Locally via Node.js
+```bash
+# Terminal 1: Start SysLab Architecture Platform (Port 3000)
 npm start
 
-# 3. Open in your browser
-http://localhost:3000
+# Terminal 2: Start AlphaForge Quant Terminal (Port 4000)
+cd quant-terminal
+npm start
 ```
 
 ---

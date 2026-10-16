@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlphaForge Quant Terminal - Algorithmic Trading & Backtester Engine</title>
+  <meta name="description" content="Institutional-grade quantitative trading platform with live stochastic market simulation, technical indicators, event-driven backtesting, and paper execution.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/terminal.css">
+  <!-- Telegram WebApp SDK for native Mini App execution -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="terminal-nav">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 13h2v-2H3v2zm4 4h2v-6H7v6zm4-12h2v16h-2V5zm4 8h2V9h-2v4zm4-4h2V5h-2v4z"/>
+        </svg>
+      </div>
+      <h1 class="brand-title">AlphaForge <span style="font-weight:400; color:#38bdf8;">Quant</span></h1>
+      <span class="brand-tag">Algo Core v1.0</span>
+    </div>
+
+    <!-- Active Asset & Live Ticker -->
+    <div class="nav-ticker-bar">
+      <div class="asset-dropdown-wrap">
+        <select id="assetSelect" class="asset-select" aria-label="Select Asset">
+          <option value="XAU-USD">XAU-USD (Spot Gold)</option>
+          <option value="BTC-USD">BTC-USD (Bitcoin)</option>
+          <option value="ETH-USD">ETH-USD (Ethereum)</option>
+          <option value="SOL-USD">SOL-USD (Solana)</option>
+          <option value="NVDA">NVDA (Nvidia)</option>
+          <option value="SPY">SPY (S&P 500 ETF)</option>
+          <option value="USOIL">USOIL (WTI Crude Oil)</option>
+          <option value="GLD">GLD (Gold Trust)</option>
+          <option value="COIN">COIN (Coinbase FinTech)</option>
+          <option value="HOOD">HOOD (Robinhood FinTech)</option>
+          <option value="PYPL">PYPL (PayPal FinTech)</option>
+          <option value="EUR-USD">EUR/USD (Euro / US Dollar Forex)</option>
+          <option value="GBP-USD">GBP/USD (British Pound Forex)</option>
+          <option value="USD-JPY">USD/JPY (Dollar / Yen Forex)</option>
+          <option value="AUD-USD">AUD/USD (Aussie / Dollar Forex)</option>
+          <option value="DOGE-USD">DOGE-USD (Dogecoin Meme)</option>
+        </select>
+      </div>
+
+      <div id="livePrice" class="live-price-badge">
+        $0.00
+      </div>
+
+      <div class="ws-status">
+        <div id="wsStatusDot" class="status-dot"></div>
+        <span id="wsStatusText">Connecting...</span>
+      </div>
+    </div>
+
+    <!-- Right Top Actions -->
+    <div class="nav-actions">
+      <button id="btnOpenRealTradeModal" class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); border-color: #34d399; font-weight: 700;" title="Micro-Capital Real Trading ($1 - $20) with Hard 1-2% Risk Enforcer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 6v12M15 9.5a3.5 3.5 0 0 0-7 0c0 2 2 3 3.5 3.5s3.5 1.5 3.5 3.5a3.5 3.5 0 0 1-7 0"></path>
+        </svg>
+        Real Money ($1-$20)
+      </button>
+
+      <button id="btnOpenNewsWire" class="btn-secondary" title="Live Financial News Wire & Market Sentiment">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+          <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+        </svg>
+        Live News Wire
+        <span id="sentimentNavBadge" style="padding: 2px 6px; font-size: 10px; border-radius: 4px; background: rgba(34,197,94,0.15); color: #22c55e; margin-left: 4px; font-weight: 700;">GREED 68</span>
+      </button>
+
+      <button id="btnOpenTelegramModal" class="btn-secondary" title="Connect Telegram for Live Trade Signals">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+          <path d="M22 2L11 13"></path>
+          <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+        </svg>
+        Telegram Alerts
+        <span id="tgNavDot" style="width:7px; height:7px; border-radius:50%; background:#64748b; margin-left:3px; display:inline-block;"></span>
+      </button>
+
+      <button id="btnOpenQuantLearn" class="btn-secondary" title="View Quant Formulas and Definitions">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        Quant 101 Theory
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Trading Workspace -->
+  <main class="dashboard-container">
+    
+    <!-- Left Panel: Chart & Technical Tools -->
+    <section class="chart-workspace">
+      <!-- Toolbar -->
+      <div class="chart-toolbar">
+        <div class="timeframe-group">
+          <button class="tf-btn" data-tf="1">1m</button>
+          <button class="tf-btn" data-tf="5">5m</button>
+          <button class="tf-btn active" data-tf="15">15m</button>
+          <button class="tf-btn" data-tf="60">1h</button>
+          <button class="tf-btn" data-tf="1440">1D</button>
+          
+          <div class="divider"></div>
+
+          <div class="indicator-toggles">
+            <button id="toggleEma" class="chip-toggle active" title="Exponential Moving Average (50)">EMA 50</button>
+            <button id="toggleSma" class="chip-toggle" title="Simple Moving Average (20)">SMA 20</button>
+            <button id="toggleBB" class="chip-toggle bb" title="Bollinger Bands (20, 2σ)">Bollinger</button>
+            <button id="toggleVWAP" class="chip-toggle active" title="Volume Weighted Average Price">VWAP</button>
+            <button id="toggleVol" class="chip-toggle active" title="Volume Bars">Volume</button>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button id="btnToggleFeedMode" class="btn-secondary" style="font-size:0.72rem; padding:3px 10px; color:#00f59b; border-color:rgba(0,245,155,0.4);" title="Switch between Real Live Exchange data and Stochastic simulation">
+            🔴 LIVE REAL FEED (Binance / Gold)
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas Area with Floating HUD -->
+      <div class="chart-view-area">
+        <div class="chart-hud">
+          <div class="hud-row">
+            <span class="hud-item">O: <span id="hudOpen">--</span></span>
+            <span class="hud-item">H: <span id="hudHigh">--</span></span>
+            <span class="hud-item">L: <span id="hudLow">--</span></span>
+            <span class="hud-item">C: <span id="hudClose">--</span></span>
+            <span class="hud-item">Vol: <span id="hudVolume">--</span></span>
+            <span class="hud-item">RSI(14): <span id="hudRsi" style="color:#c77dff;">--</span></span>
+          </div>
+        </div>
+
+        <div class="main-chart-canvas-wrap">
+          <canvas id="mainChart"></canvas>
+        </div>
+
+        <!-- Subchart: Oscillators & Quant Performance -->
+        <div class="subchart-view-area">
+          <div class="subchart-header">
+            <label style="font-size:0.7rem; color:#64748b; font-weight:600;">SUB-CHART PANE:</label>
+            <select id="subchartSelect" class="subchart-select">
+              <option value="rsi">RSI Oscillator (14)</option>
+              <option value="macd">MACD Histogram (12, 26, 9)</option>
+              <option value="equity">Strategy Equity vs Benchmark (Alpha)</option>
+            </select>
+          </div>
+          <canvas id="subChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Panel: Quantitative Strategy Lab & L2 Order Book -->
+    <aside class="control-sidebar">
+      <!-- Tabs -->
+      <div class="sidebar-tabs">
+        <button class="tab-btn active" data-tab="backtest">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          Strategy Lab
+        </button>
+        <button class="tab-btn" data-tab="orderbook">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="9" y1="21" x2="9" y2="9"></line>
+          </svg>
+          L2 Order Book
+        </button>
+        <button class="tab-btn" data-tab="bot">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Live Bot
+        </button>
+      </div>
+
+      <!-- TAB 1: STRATEGY LAB & BACKTEST -->
+      <div id="backtestTab" class="tab-content active">
+        <!-- Strategy Controls -->
+        <div class="form-group">
+          <label class="form-label">Algorithm Architecture</label>
+          <select id="strategySelect" class="form-select">
+            <option value="smaCrossover">Dual Moving Average Crossover (Trend Following)</option>
+            <option value="rsiMeanReversion">RSI Mean Reversion (Statistical Oscillator)</option>
+            <option value="bollingerReversion">Bollinger Bands Mean Reversion</option>
+            <option value="macdMomentum">MACD Momentum Trend Shift</option>
+            <option value="custom">Custom JavaScript Algorithm Sandbox</option>
+          </select>
+        </div>
+
+        <!-- Dynamic Parameters -->
+        <div id="strategyParams"></div>
+
+        <!-- Custom Code Editor (visible only when custom is selected) -->
+        <div id="customEditorContainer" style="display:none;" class="form-group">
+          <label class="form-label">
+            Custom Logic JS
+            <span style="font-size:0.65rem; color:#38bdf8;">return 'BUY' | 'SELL' | 'HOLD'</span>
+          </label>
+          <textarea id="customAlgoCode" class="code-editor-box" spellcheck="false">// Access: candle, index, closes, indicators (rsi, sma20, ema50, bbUpper, bbLower, macd, macdSignal)
+if (indicators.rsi < 28 && candle.close > indicators.bbLower) {
+  return 'BUY';
+} else if (indicators.rsi > 72) {
+  return 'SELL';
+}
+return 'HOLD';</textarea>
+        </div>
+
+        <!-- Execution Environment Settings -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Initial Capital ($)</label>
+            <input type="number" id="inputCapital" class="form-input" value="10000" step="1000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Slippage (bps)</label>
+            <input type="number" id="inputSlippage" class="form-input" value="5" step="1">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Maker / Taker Commission (bps)</label>
+          <input type="number" id="inputCommission" class="form-input" value="7.5" step="0.5">
+        </div>
+
+        <button id="btnRunBacktest" class="btn-primary" style="width:100%; padding:10px 0; margin-top:4px;">
+          ⚡ Run Quant Backtest
+        </button>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px; padding:6px 10px; background:rgba(0,245,155,0.05); border:1px solid rgba(0,245,155,0.2); border-radius:6px; font-size:0.75rem;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#00f59b; font-weight:600; margin:0;">
+            <input type="checkbox" id="checkAutoSendBacktestTelegram" checked style="accent-color:#00f59b; cursor:pointer;">
+            <span>✈️ Auto-Send Report to Telegram</span>
+          </label>
+          <span id="tgBacktestSentBadge" style="font-size:0.7rem; color:#64748b; font-family:var(--font-mono);">Ready</span>
+        </div>
+
+        <!-- Institutional Tearsheet Card -->
+        <div class="results-card">
+          <div class="results-header">
+            <span class="results-title">Institutional Tearsheet</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="statReturnPct" class="stat-val bullish" style="font-size:1.1rem;">+0.00%</span>
+              <button id="btnShareTelegram" class="btn-secondary" style="padding:2px 8px; font-size:0.68rem;" title="Send Tearsheet to Telegram">
+                📤 Telegram
+              </button>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-item">
+              <span class="stat-label">Net Profit</span>
+              <span id="statNetProfit" class="stat-val bullish">$0.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Sharpe Ratio</span>
+              <span id="statSharpe" class="stat-val cyan">0.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Sortino Ratio</span>
+              <span id="statSortino" class="stat-val purple">0.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Max Drawdown</span>
+              <span id="statMDD" class="stat-val bearish">-0.00%</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Alpha (vs B&H)</span>
+              <span id="statAlpha" class="stat-val bullish">+0.00%</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Win Rate</span>
+              <span id="statWinRate" class="stat-val">0.0%</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Profit Factor</span>
+              <span id="statProfitFactor" class="stat-val">0.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Total Trades</span>
+              <span id="statTrades" class="stat-val">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trade Blotter -->
+        <div class="form-group">
+          <label class="form-label">Trade Execution Blotter</label>
+          <div class="trade-blotter-wrap">
+            <table class="blotter-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Entry &rarr; Exit</th>
+                  <th>Net PnL</th>
+                  <th>Fees</th>
+                  <th>Hold</th>
+                </tr>
+              </thead>
+              <tbody id="blotterRows">
+                <tr>
+                  <td colspan="5" style="text-align:center; color:#64748b; padding:12px;">Click "Run Quant Backtest" above to simulate</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: L2 ORDER BOOK -->
+      <div id="orderbookTab" class="tab-content">
+        <div class="ob-metric-bar">
+          <div>
+            <div class="stat-label">Spread</div>
+            <div id="obSpread" class="stat-val cyan">$0.00</div>
+          </div>
+          <div>
+            <div class="stat-label">Spread Bps</div>
+            <div id="obSpreadBps" class="stat-val">0.0 bps</div>
+          </div>
+          <div>
+            <div class="stat-label">Imbalance (OBI)</div>
+            <div id="obImbalance" class="stat-val bullish">+0.0%</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:#64748b;">
+            <span>Bearish Pressure</span>
+            <span>Micro-Price Imbalance</span>
+            <span>Bullish Pressure</span>
+          </div>
+          <div class="ob-imbalance-meter">
+            <div id="obImbalanceFill" class="ob-imbalance-fill"></div>
+          </div>
+        </div>
+
+        <div id="orderBookPanel" class="ob-tables-container">
+          <div>
+            <div class="ob-col-title" style="color:var(--color-bullish);">BIDS (BUYERS)</div>
+            <div id="obBidsList" style="display:flex; flex-direction:column; gap:2px;"></div>
+          </div>
+          <div>
+            <div class="ob-col-title" style="color:var(--color-bearish); text-align:right;">ASKS (SELLERS)</div>
+            <div id="obAsksList" style="display:flex; flex-direction:column; gap:2px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: LIVE PAPER BOT -->
+      <div id="botTab" class="tab-content">
+        <div class="bot-hero-card">
+          <div class="bot-status-indicator">
+            <span class="bot-tag">
+              <span id="botLiveIndicator" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#64748b;"></span>
+              Auto-Trading Engine
+            </span>
+            <span id="botStatusBadge" style="font-size:0.7rem; font-family:var(--font-mono); color:#64748b;">STATUS: IDLE</span>
+          </div>
+
+          <!-- Strategy Selection -->
+          <div class="form-group">
+            <label class="form-label">Active Strategy</label>
+            <select id="botStrategySelect" class="form-select">
+              <option value="smaCrossover">Dual Moving Average Crossover</option>
+              <option value="rsiMeanReversion">RSI Mean Reversion (Oversold/Overbought)</option>
+              <option value="bollingerReversion">Bollinger Bands Mean Reversion</option>
+            </select>
+          </div>
+
+          <!-- Risk Guards: Stop-Loss & Take-Profit Sliders -->
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label class="form-label" style="margin:0;">🛡️ Hard Stop-Loss</label>
+              <span id="slValueBadge" style="font-family:var(--font-mono); font-size:0.75rem; color:#ff3366; font-weight:700;">-2.0%</span>
+            </div>
+            <input type="range" id="botStopLossInput" min="0.5" max="10.0" step="0.5" value="2.0" style="width:100%; accent-color:#ff3366; cursor:pointer;">
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label class="form-label" style="margin:0;">🎯 Profit Target (Take-Profit)</label>
+              <span id="tpValueBadge" style="font-family:var(--font-mono); font-size:0.75rem; color:#00f59b; font-weight:700;">+5.0%</span>
+            </div>
+            <input type="range" id="botTakeProfitInput" min="1.0" max="25.0" step="0.5" value="5.0" style="width:100%; accent-color:#00f59b; cursor:pointer;">
+          </div>
+
+          <!-- Market Regime Filter Toggle -->
+          <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,240,255,0.04); border:1px solid rgba(0,240,255,0.15); border-radius:6px; padding:8px 10px;">
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span style="font-size:0.75rem; font-weight:700; color:#00f0ff;">🛡️ Volatility Regime Filter</span>
+              <span style="font-size:0.65rem; color:#94a3b8;">Blocks false breakouts during high chop & volatility shocks</span>
+            </div>
+            <input type="checkbox" id="checkAiFilter" checked style="cursor:pointer; accent-color:#00f0ff; transform:scale(1.2);">
+          </div>
+
+          <!-- Live Position HUD -->
+          <div id="botPositionHud" style="background:rgba(10,15,26,0.8); border:1px solid var(--border-subtle); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#94a3b8;">
+              <span>REGIME: <b id="hudRegime" style="color:#00f0ff;">CALCULATING...</b></span>
+              <span>CONFIDENCE: <b id="hudAiConf" style="color:#00f59b;">--%</b></span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-family:var(--font-mono); font-size:0.72rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px;">
+              <div>Pos: <b id="hudPosition">0.00</b></div>
+              <div>PnL: <b id="hudUnrealizedPnL" style="color:#64748b;">$0.00 (0.0%)</b></div>
+              <div>Entry: <span id="hudEntryPrice">$--</span></div>
+              <div>SL / TP: <span id="hudSlTpLevels" style="color:#94a3b8;">$-- / $--</span></div>
+            </div>
+          </div>
+
+          <button id="btnToggleBot" class="btn-primary" style="width:100%; padding:10px 0; font-weight:800;">
+            🚀 Start Algorithmic Execution Engine
+          </button>
+
+          <button id="btnForceTestTrade" class="btn-secondary" style="width:100%; justify-content:center; border-color:rgba(0,240,255,0.3); color:#00f0ff; margin-top:6px; font-weight:700;">
+            ⚡ Trigger Live Execution (Ping Telegram)
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Live Trade Blotter & Execution Log</label>
+          <div id="botLogsList" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;">
+            <div style="color:#64748b; font-size:0.75rem; text-align:center; padding:16px;">
+              Engine is standby. Click "Start Algorithmic Execution Engine" to begin.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- Modal: Quant 101 Educational Knowledge -->
+  <div id="quantModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          Quant 101: Formulas, Math & Market Microstructure
+        </div>
+        <button id="btnCloseQuantLearn" class="modal-close-btn">&times;</button>
+      </div>
+      <div id="quantModalContent" class="modal-body">
+        <!-- Injected dynamically from /api/glossary -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Telegram Bot Integration -->
+  <div id="telegramModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+          </svg>
+          Telegram Bot & Trade Alerts
+        </div>
+        <button id="btnCloseTelegramModal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="gap: 14px;">
+        <!-- Setup Guide Cards -->
+        <div style="background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 8px; padding: 12px; font-size: 0.78rem; line-height: 1.5; color: #cbd5e1;">
+          <div style="font-weight: 700; color: #00f0ff; margin-bottom: 4px;">🚀 30-Second Setup Guide:</div>
+          <div>1. Open Telegram and search for <b>@BotFather</b> &rarr; send <code>/newbot</code> to get your <b>Bot Token</b>.</div>
+          <div>2. Search for <b>@userinfobot</b> on Telegram &rarr; click Start to get your <b>Numeric Chat ID</b>.</div>
+          <div>3. Paste both below and click <b>Test Connection</b>!</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Telegram Bot Token</label>
+          <input type="password" id="inputTgToken" class="form-input" placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Telegram Chat ID (Personal or Group Channel)</label>
+          <input type="text" id="inputTgChatId" class="form-input" placeholder="e.g. 987654321">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="checkTgEnabled" style="cursor: pointer; accent-color: #00f0ff;" checked>
+          <label for="checkTgEnabled" style="font-size: 0.8rem; cursor: pointer; color: #cbd5e1;">
+            Enable Real-Time Signals & Paper Trade Alerts
+          </label>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+          <button id="btnTestTelegram" class="btn-secondary" style="justify-content: center;">
+            🧪 Test Connection
+          </button>
+          <button id="btnSaveTelegram" class="btn-primary" style="justify-content: center;">
+            💾 Save Settings
+          </button>
+        </div>
+
+        <div id="tgStatusMsg" style="font-size: 0.75rem; text-align: center; min-height: 18px; font-family: var(--font-mono);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Financial News & Market Sentiment Wire -->
+  <div id="newsModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 620px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+            <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+          </svg>
+          Breaking Financial News & Macro Sentiment
+        </div>
+        <button id="btnCloseNewsModal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="gap: 14px;">
+        <!-- Sentiment Card -->
+        <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 14px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600;">Overall Market Sentiment</div>
+            <div id="modalSentimentLabel" style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin-top: 2px;">GREED (BULLISH DRIFT)</div>
+            <div id="modalSentimentDesc" style="font-size: 0.76rem; color: #cbd5e1; margin-top: 3px;">Market conditions favor trend-following strategies with tight trailing stop-loss guards.</div>
+          </div>
+          <div style="text-align: right; min-width: 80px;">
+            <div id="modalSentimentScore" style="font-size: 2rem; font-weight: 900; color: #22c55e; font-family: var(--font-mono);">68</div>
+            <div style="font-size: 0.68rem; color: #64748b; font-weight: 600;">/ 100 INDEX</div>
+          </div>
+        </div>
+
+        <!-- Filter Tags -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+          <button class="news-filter-btn active" data-category="ALL" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">All Feeds</button>
+          <button class="news-filter-btn" data-category="GOLD" style="background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">Gold & Metals</button>
+          <button class="news-filter-btn" data-category="CRYPTO" style="background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">Crypto & BTC</button>
+          <button class="news-filter-btn" data-category="MACRO" style="background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">Macro & Central Banks</button>
+        </div>
+
+        <!-- News Feed Container -->
+        <div id="newsFeedList" style="display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 4px;">
+          <!-- Dynamically populated from /api/news -->
+        </div>
+
+        <!-- Smart Investing Tip (The Dogecoin Lesson) -->
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 12px; font-size: 0.76rem; color: #cbd5e1; line-height: 1.45;">
+          <b style="color: #f87171;">💡 Invest Smart Note:</b> Retail traders often lose money on meme assets like Dogecoin due to extreme volatility without fundamental value or automated stop-loss protection. In AlphaForge, our <b>Hard Stop-Loss (-2%)</b> and <b>AI Regime Filter</b> ensure your capital is mathematically shielded from sudden drops.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Micro-Account Real Trading & Risk Guard -->
+  <div id="realTradeModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6v12M15 9.5a3.5 3.5 0 0 0-7 0c0 2 2 3 3.5 3.5s3.5 1.5 3.5 3.5a3.5 3.5 0 0 1-7 0"></path>
+          </svg>
+          Micro-Capital Real Trading Gateway ($1 – $20)
+        </div>
+        <button id="btnCloseRealTradeModal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="gap: 14px;">
+        <!-- Institutional Safety Guarantee Banner -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px; font-size: 0.78rem; line-height: 1.5; color: #cbd5e1;">
+          <div style="font-weight: 800; color: #34d399; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+            <span>🛡️ MATHEMATICAL RISK SHIELD ACTIVE</span>
+          </div>
+          <div>Every trade is dynamically sized based on your account (<b>$1.00 – $20.00</b>). With an enforced <b>2% Stop-Loss</b>, your maximum possible loss on a full $20 trade is strictly <b>$0.40 (40 cents)</b>, safeguarding your other <b>$19.60</b>.</div>
+        </div>
+
+        <!-- Interactive Real-Time Risk Calculator -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">1. Universal Asset & Risk Calculator</div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">Asset to Trade</label>
+              <select id="realTradeAsset" class="form-input">
+                <option value="XAU-USD">XAU-USD (Spot Gold)</option>
+                <option value="BTC-USD">BTC-USD (Bitcoin)</option>
+                <option value="ETH-USD">ETH-USD (Ethereum)</option>
+                <option value="SOL-USD">SOL-USD (Solana)</option>
+                <option value="COIN">COIN (Coinbase FinTech)</option>
+                <option value="HOOD">HOOD (Robinhood FinTech)</option>
+                <option value="PYPL">PYPL (PayPal FinTech)</option>
+                <option value="EUR-USD">EUR/USD (Euro / US Dollar Forex)</option>
+                <option value="GBP-USD">GBP/USD (British Pound Forex)</option>
+                <option value="USD-JPY">USD/JPY (Dollar / Yen Forex)</option>
+                <option value="AUD-USD">AUD/USD (Aussie / Dollar Forex)</option>
+                <option value="NVDA">NVDA (Nvidia Corp)</option>
+                <option value="DOGE-USD">DOGE-USD (Dogecoin Meme)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Order Direction</label>
+              <select id="realTradeSide" class="form-input">
+                <option value="AUTO" selected>🤖 AUTO (Algorithm Decides Direction)</option>
+                <option value="BUY">BUY / LONG 📈 (Manual Override)</option>
+                <option value="SELL">SELL / SHORT 📉 (Manual Override)</option>
+              </select>
+              <div id="autoSignalBadge" style="font-size: 0.68rem; color: #00f59b; font-weight: 600; margin-top: 4px;">
+                🤖 Live Signal: Calculating algorithmic bias...
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label">Trade Capital ($ USD)</label>
+              <input type="number" id="calcTradeCapital" class="form-input" value="10" min="1" max="20" step="1">
+              <span style="font-size: 0.68rem; color: #64748b;">Dynamic scale: $1 – $20</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Risk Per Trade (%)</label>
+              <select id="calcRiskPct" class="form-input">
+                <option value="1.0">1.0% Risk (Ultra-Safe)</option>
+                <option value="2.0" selected>2.0% Risk (Standard Quant Shield)</option>
+              </select>
+              <span style="font-size: 0.68rem; color: #64748b;">Hard limit: 2% max</span>
+            </div>
+          </div>
+
+          <!-- Quick Capital Allocation Chips -->
+          <div style="display: flex; gap: 6px; align-items: center; margin-top: -2px;">
+            <span style="font-size: 0.68rem; color: #64748b;">Quick Size:</span>
+            <button type="button" class="btn-chip-amt" data-val="5" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">$5 (25%)</button>
+            <button type="button" class="btn-chip-amt" data-val="10" style="background: rgba(16,185,129,0.15); border: 1px solid #10b981; color: #34d399; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; font-weight: 700;">$10 (50%)</button>
+            <button type="button" class="btn-chip-amt" data-val="15" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">$15 (75%)</button>
+            <button type="button" class="btn-chip-amt" data-val="20" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">$20 (100% Max)</button>
+          </div>
+
+          <!-- Calculated Metrics Display -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; text-align: center;">
+            <div>
+              <div style="font-size: 0.66rem; color: #94a3b8;">MAX POSSIBLE LOSS</div>
+              <div id="calcMaxLoss" style="font-size: 1.1rem; font-weight: 800; color: #ef4444; font-family: var(--font-mono); margin-top: 2px;">-$0.20</div>
+            </div>
+            <div>
+              <div style="font-size: 0.66rem; color: #94a3b8;">STOP-LOSS PRICE</div>
+              <div id="calcStopPrice" style="font-size: 1.1rem; font-weight: 800; color: #f59e0b; font-family: var(--font-mono); margin-top: 2px;">$0.00</div>
+            </div>
+            <div>
+              <div style="font-size: 0.66rem; color: #94a3b8;">TARGET TAKE-PROFIT</div>
+              <div id="calcTakePrice" style="font-size: 1.1rem; font-weight: 800; color: #10b981; font-family: var(--font-mono); margin-top: 2px;">$0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exchange Credentials Section -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">2. Exchange Connection</div>
+
+          <div class="form-group">
+            <label class="form-label">Execution Environment</label>
+            <select id="realTradeMode" class="form-input">
+              <option value="CAPITAL_DEMO" selected>Capital.com Demo (Spot Gold XAU/USD Sandbox)</option>
+              <option value="CAPITAL_LIVE">Capital.com Live (Spot Gold XAU/USD $20 Real Money)</option>
+              <option value="BINANCE_LIVE">Binance Spot Real (PAXG Physical Gold & Crypto)</option>
+              <option value="BINANCE_TESTNET">Binance Spot Testnet (Zero Risk Sandbox)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Broker / Exchange API Key</label>
+            <input type="password" id="realApiKey" class="form-input" placeholder="e.g. Capital.com or Binance API Key">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">API Secret / Password</label>
+            <input type="password" id="realApiSecret" class="form-input" placeholder="e.g. API Secret or Account Password">
+          </div>
+
+          <div id="capitalEmailGroup" class="form-group">
+            <label class="form-label">Capital.com Login Email (Account Identifier)</label>
+            <input type="text" id="realApiEmail" class="form-input" placeholder="e.g. your-email@gmail.com">
+          </div>
+
+          <div style="background: rgba(239, 68, 68, 0.08); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 8px 10px; font-size: 0.72rem; color: #fca5a5;">
+            ⚠️ <b>MANDATORY SECURITY RULE:</b> In your exchange API settings, leave <b>"Enable Withdrawals" UNCHECKED</b>. The bot only requires spot trading permission.
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button id="btnSaveRealTradeConfig" class="btn-secondary" style="justify-content: center; font-weight: 700;">
+            💾 Save Settings
+          </button>
+          <button id="btnExecuteRealTrade" class="btn-primary" style="justify-content: center; background: #10b981; border-color: #34d399; font-weight: 800;">
+            ⚡ Execute Micro Trade
+          </button>
+        </div>
+
+        <div id="realTradeStatusMsg" style="font-size: 0.75rem; text-align: center; min-height: 16px; font-family: var(--font-mono); color: #94a3b8;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/chartEngine.js"></script>
+  <script src="js/orderBookRenderer.js"></script>
+  <script src="js/quantLearn.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

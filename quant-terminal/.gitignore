@@ -1,0 +1,22 @@
+# Security & Environment
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs & Runtime
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# Private Credential Configs
+telegram_config.json
+real_trade_config.json
+server/telegram_config.json

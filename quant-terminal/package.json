@@ -1,0 +1,25 @@
+{
+  "name": "alphaforge-quant-terminal",
+  "version": "1.0.0",
+  "description": "Professional Quantitative Trading, Backtesting & Paper Trading Engine with Live Market Simulation",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "node --test tests/**/*.test.js"
+  },
+  "keywords": [
+    "quant",
+    "algorithmic-trading",
+    "backtesting",
+    "fintech",
+    "trading-engine",
+    "technical-indicators"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}

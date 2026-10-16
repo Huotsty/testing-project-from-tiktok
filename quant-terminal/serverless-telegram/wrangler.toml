@@ -1,0 +1,8 @@
+name = "alphaforge-quant-bot"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Cloudflare Workers Free Tier: 100,000 requests/day for $0
+[vars]
+TERMINAL_URL = "https://your-domain-or-ngrok.com"
+# Store secret with: npx wrangler secret put TELEGRAM_BOT_TOKEN

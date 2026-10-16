@@ -37,6 +37,31 @@ services:
       start_period: 5s
 
   # ==========================================
+  # AlphaForge Quant & Trading Engine
+  # ==========================================
+  quant-terminal:
+    build:
+      context: ./quant-terminal
+      dockerfile: Dockerfile
+    container_name: alphaforge-quant-terminal
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - HOST=0.0.0.0
+    networks:
+      - syslab-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/assets"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+
+  # ==========================================
   # Redis Distributed Backplane (Scale-Out)
   # ==========================================
   syslab-redis:

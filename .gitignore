@@ -42,3 +42,9 @@ docker-data/
 .gemini/
 brain/
 scratch/
+
+# Quant Terminal Private Configs & Dependencies
+quant-terminal/node_modules/
+quant-terminal/telegram_config.json
+quant-terminal/real_trade_config.json
+quant-terminal/server/telegram_config.json
