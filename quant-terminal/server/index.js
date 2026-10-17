@@ -17,6 +17,9 @@ const RegimeFilter = require('./core/regimeFilter');
 const liveFeedService = require('./core/liveFeedService');
 const newsService = require('./services/newsService');
 const realTradingService = require('./services/realTradingService');
+const AutoBotManager = require('./services/autoBotManager');
+
+const autoBotManager = new AutoBotManager(telegramService);
 
 const tgConfigFile = path.join(__dirname, 'telegram_config.json');
 if (fs.existsSync(tgConfigFile)) {
@@ -397,6 +400,51 @@ app.post('/api/real-trade/order', async (req, res) => {
   }
 });
 
+// --- 8. Autonomous Dual-Asset Bot (Gold & BTC) Endpoints ---
+autoBotManager.addListener((event) => {
+  const msg = JSON.stringify({ type: 'AUTO_BOT_EVENT', data: event });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(msg);
+    }
+  });
+});
+
+app.get('/api/auto-bot/status', (req, res) => {
+  res.json({ success: true, bots: autoBotManager.getStatus() });
+});
+
+app.post('/api/auto-bot/start', (req, res) => {
+  const { symbol } = req.body || {};
+  if (symbol) {
+    autoBotManager.startBot(symbol);
+  } else {
+    autoBotManager.startAll();
+  }
+  res.json({ success: true, bots: autoBotManager.getStatus() });
+});
+
+app.post('/api/auto-bot/stop', (req, res) => {
+  const { symbol } = req.body || {};
+  if (symbol) {
+    autoBotManager.stopBot(symbol);
+  } else {
+    autoBotManager.stopAll();
+  }
+  res.json({ success: true, bots: autoBotManager.getStatus() });
+});
+
+app.post('/api/auto-bot/reset', (req, res) => {
+  const { symbol } = req.body || {};
+  if (symbol) {
+    autoBotManager.reset(symbol);
+  } else {
+    autoBotManager.reset('XAU-USD');
+    autoBotManager.reset('BTC-USD');
+  }
+  res.json({ success: true, bots: autoBotManager.getStatus() });
+});
+
 // Stream real-world ticks directly into terminal
 liveFeedService.onTick((tick) => {
   if (feedMode !== 'LIVE_REAL') return;
@@ -431,6 +479,9 @@ liveFeedService.onTick((tick) => {
       }
     }
   });
+
+  // Autonomous dual-asset bots tick evaluation
+  autoBotManager.onTick(tick.symbol, tick.price, candles);
 });
 
 // --- WEBSOCKET REAL-TIME TICKER & BOT ENGINE ---
@@ -527,6 +578,9 @@ setInterval(() => {
         }
       }
     });
+
+    // Autonomous background bots tick evaluation
+    autoBotManager.onTick(symbol, newPrice, candles);
   }
 }, 1000);
 
