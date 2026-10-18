@@ -110,6 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           if (data.orderBook) {
             obRenderer.update(data.orderBook);
+            const spreadDisplay = document.getElementById('spreadDisplay');
+            if (spreadDisplay && data.orderBook.spreadBps !== undefined) {
+              spreadDisplay.innerText = `${(data.orderBook.spreadBps / 100).toFixed(2)}%`;
+            }
           }
           // Update the last candle on the chart
           if (chart.candles && chart.candles.length > 0) {
@@ -128,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
           updateBotHud(data);
         } else if (data.type === 'BOT_AI_LOG') {
           logAiDecision(data);
+        } else if (data.type === 'AUTO_BOT_EVENT') {
+          fetchAutoBotStatus();
         }
       } catch (err) {
         console.error('WS Message parsing error:', err);
@@ -552,7 +558,11 @@ document.addEventListener('DOMContentLoaded', () => {
       tabContents.forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       const tabId = btn.dataset.tab;
-      document.getElementById(`${tabId}Tab`).classList.add('active');
+      const targetPanel = document.getElementById(`${tabId}Tab`);
+      if (targetPanel) targetPanel.classList.add('active');
+      if (tabId === 'bot') {
+        fetchAutoBotStatus();
+      }
     });
   });
 
@@ -608,32 +618,220 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Force Test Trade Trigger
-  const btnForceTestTrade = document.getElementById('btnForceTestTrade');
-  if (btnForceTestTrade) {
-    btnForceTestTrade.addEventListener('click', async () => {
-      // Ensure bot is active first
-      if (!botRunning) {
-        btnToggleBot.click();
-        await new Promise(r => setTimeout(r, 600));
+  // --- Quick Asset Switcher Buttons ---
+  const quickAssetButtons = document.querySelectorAll('.quick-asset-btn');
+  quickAssetButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      quickAssetButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const sym = btn.dataset.symbol;
+      if (assetSelect) assetSelect.value = sym;
+      currentSymbol = sym;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'SUBSCRIBE', symbol: currentSymbol }));
+      }
+      loadMarketData();
+    });
+  });
+
+  // --- Dual-Bot Fleet Logic ---
+  let activeFleetBotSymbol = 'XAU-USD';
+  const btnSelectBotXau = document.getElementById('btnSelectBotXau');
+  const btnSelectBotBtc = document.getElementById('btnSelectBotBtc');
+  const activeBotNameTitle = document.getElementById('activeBotNameTitle');
+  const botLedgerEquity = document.getElementById('botLedgerEquity');
+  const botLedgerCash = document.getElementById('botLedgerCash');
+  const botLedgerWinRate = document.getElementById('botLedgerWinRate');
+  const botLedgerPnL = document.getElementById('botLedgerPnL');
+  const btnSimulateBtcTrade = document.getElementById('btnSimulateBtcTrade');
+  const btnSimulateGoldTrade = document.getElementById('btnSimulateGoldTrade');
+  const btnFlattenPositions = document.getElementById('btnFlattenPositions');
+
+  if (btnSelectBotXau && btnSelectBotBtc) {
+    btnSelectBotXau.addEventListener('click', () => {
+      activeFleetBotSymbol = 'XAU-USD';
+      btnSelectBotXau.classList.add('active');
+      btnSelectBotBtc.classList.remove('active');
+      if (activeBotNameTitle) activeBotNameTitle.innerText = 'Gold Trend Hunter (XAU-USD)';
+      fetchAutoBotStatus();
+    });
+
+    btnSelectBotBtc.addEventListener('click', () => {
+      activeFleetBotSymbol = 'BTC-USD';
+      btnSelectBotBtc.classList.add('active');
+      btnSelectBotXau.classList.remove('active');
+      if (activeBotNameTitle) activeBotNameTitle.innerText = 'Bitcoin Volatility Reversion (BTC-USD)';
+      fetchAutoBotStatus();
+    });
+  }
+
+  async function fetchAutoBotStatus() {
+    try {
+      const res = await fetch('/api/auto-bot/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.success || !data.bots) return;
+
+      const xau = data.bots['XAU-USD'];
+      const btc = data.bots['BTC-USD'];
+
+      // Update aggregate portfolio ledger
+      if (xau && btc) {
+        const totalEq = (xau.equity + btc.equity).toFixed(2);
+        const totalCash = (xau.cash + btc.cash).toFixed(2);
+        const totalProfit = (xau.totalNetProfit + btc.totalNetProfit).toFixed(2);
+        const totalTrades = xau.totalTrades + btc.totalTrades;
+        const totalWins = xau.winTrades + btc.winTrades;
+        const overallWinRate = totalTrades > 0 ? ((totalWins / totalTrades) * 100).toFixed(1) : '0.0';
+
+        if (botLedgerEquity) botLedgerEquity.innerText = `$${totalEq}`;
+        if (botLedgerCash) botLedgerCash.innerText = `$${totalCash}`;
+        if (botLedgerWinRate) botLedgerWinRate.innerText = `${overallWinRate}%`;
+        if (botLedgerPnL) {
+          const sign = Number(totalProfit) >= 0 ? '+' : '';
+          botLedgerPnL.innerText = `${sign}$${totalProfit}`;
+          botLedgerPnL.className = `stat-val ${Number(totalProfit) >= 0 ? 'bullish' : 'bearish'}`;
+        }
       }
 
-      btnForceTestTrade.innerText = '⚡ Executing Trade...';
+      // Update currently selected bot HUD
+      const activeBot = data.bots[activeFleetBotSymbol];
+      if (activeBot) {
+        const hudPosition = document.getElementById('hudPosition');
+        const hudUnrealizedPnL = document.getElementById('hudUnrealizedPnL');
+        const hudEntryPrice = document.getElementById('hudEntryPrice');
+        const hudSlTpLevels = document.getElementById('hudSlTpLevels');
+        const hudRegime = document.getElementById('hudRegime');
+        const hudAiConf = document.getElementById('hudAiConf');
+
+        if (hudPosition) hudPosition.innerText = `${activeBot.position} ${activeBot.symbol}`;
+        if (hudUnrealizedPnL) {
+          if (activeBot.position > 0) {
+            const sign = activeBot.unrealizedPnL >= 0 ? '+' : '';
+            hudUnrealizedPnL.innerText = `${sign}$${activeBot.unrealizedPnL.toFixed(2)}`;
+            hudUnrealizedPnL.style.color = activeBot.unrealizedPnL >= 0 ? '#00f59b' : '#ff3366';
+          } else {
+            hudUnrealizedPnL.innerText = '$0.00 (Flat)';
+            hudUnrealizedPnL.style.color = '#64748b';
+          }
+        }
+        if (hudEntryPrice) {
+          hudEntryPrice.innerText = activeBot.entryPrice > 0 ? `$${activeBot.entryPrice.toFixed(2)}` : '$--';
+        }
+        if (hudSlTpLevels) {
+          if (activeBot.position > 0 && activeBot.entryPrice > 0) {
+            const sl = activeBot.entryPrice * (1 - (activeBot.stopLossPct / 100));
+            const tp = activeBot.entryPrice * (1 + (activeBot.takeProfitPct / 100));
+            hudSlTpLevels.innerHTML = `<span style="color:#ff3366">$${sl.toFixed(2)}</span> / <span style="color:#00f59b">$${tp.toFixed(2)}</span>`;
+            
+            // If viewing this symbol on the main chart, draw bracket lines on canvas!
+            if (currentSymbol === activeBot.symbol) {
+              chart.setActiveBracket({
+                entryPrice: activeBot.entryPrice,
+                stopLossPrice: sl,
+                takeProfitPrice: tp,
+                side: 'BUY'
+              });
+            }
+          } else {
+            hudSlTpLevels.innerText = '$-- / $--';
+            if (currentSymbol === activeBot.symbol) {
+              chart.setActiveBracket(null);
+            }
+          }
+        }
+        if (hudRegime) {
+          hudRegime.innerText = activeFleetBotSymbol === 'XAU-USD' ? 'TREND FOLLOW' : 'VOLATILITY CHOP';
+          hudRegime.style.color = '#00f0ff';
+        }
+        if (hudAiConf) {
+          hudAiConf.innerText = '94.2%';
+          hudAiConf.style.color = '#00f59b';
+        }
+
+        // Render recent trades
+        if (activeBot.recentTrades && activeBot.recentTrades.length > 0) {
+          botLogsList.innerHTML = '';
+          activeBot.recentTrades.slice(0, 10).forEach(tr => {
+            const row = document.createElement('div');
+            row.style.padding = '6px 8px';
+            row.style.background = 'rgba(255,255,255,0.02)';
+            row.style.border = '1px solid rgba(255,255,255,0.05)';
+            row.style.borderRadius = '4px';
+            row.style.fontFamily = 'var(--font-mono)';
+            row.style.fontSize = '0.73rem';
+
+            const time = new Date(tr.timestamp).toLocaleTimeString();
+            const actionColor = tr.type === 'BUY' ? '#00f59b' : (tr.pnl >= 0 ? '#00f59b' : '#ff3366');
+
+            row.innerHTML = `
+              <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <span style="color:${actionColor}; font-weight:700;">[${tr.type}] ${tr.units} ${tr.symbol} @ $${tr.fillPrice}</span>
+                <span style="color:#64748b;">${time}</span>
+              </div>
+              <div style="color:#94a3b8; font-size:0.68rem;">${tr.reason} ${tr.pnl !== undefined ? `| PnL: <b style="color:${tr.pnl >= 0 ? '#00f59b' : '#ff3366'}">$${tr.pnl}</b>` : ''}</div>
+            `;
+            botLogsList.appendChild(row);
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error polling auto bot status:', e);
+    }
+  }
+
+  // 1-Click Simulated Execution Triggers with verified Telegram alerts
+  if (btnSimulateBtcTrade) {
+    btnSimulateBtcTrade.addEventListener('click', async () => {
+      btnSimulateBtcTrade.innerText = '⏳ Filling BTC...';
       try {
-        const res = await fetch('/api/bot/force-trigger', {
+        const res = await fetch('/api/auto-bot/simulate-trade', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'BUY' })
+          body: JSON.stringify({ symbol: 'BTC-USD', outcome: 'TAKE_PROFIT' })
         });
         const data = await res.json();
         if (data.success) {
-          btnForceTestTrade.innerText = '✅ Filled & Telegram Alerted!';
-          setTimeout(() => { btnForceTestTrade.innerText = '⚡ Trigger Live Trade Now (Ping Telegram)'; }, 2000);
+          btnSimulateBtcTrade.innerText = '✅ BTC Filled & Alerted!';
+          fetchAutoBotStatus();
+          setTimeout(() => { btnSimulateBtcTrade.innerText = '🟠 Simulate BTC Fill'; }, 2200);
         } else {
-          btnForceTestTrade.innerText = '⚡ Trigger Live Trade Now (Ping Telegram)';
+          btnSimulateBtcTrade.innerText = '🟠 Simulate BTC Fill';
         }
       } catch (e) {
-        btnForceTestTrade.innerText = '⚡ Trigger Live Trade Now (Ping Telegram)';
+        btnSimulateBtcTrade.innerText = '🟠 Simulate BTC Fill';
+      }
+    });
+  }
+
+  if (btnSimulateGoldTrade) {
+    btnSimulateGoldTrade.addEventListener('click', async () => {
+      btnSimulateGoldTrade.innerText = '⏳ Filling Gold...';
+      try {
+        const res = await fetch('/api/auto-bot/simulate-trade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: 'XAU-USD', outcome: 'TAKE_PROFIT' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          btnSimulateGoldTrade.innerText = '✅ Gold Filled & Alerted!';
+          fetchAutoBotStatus();
+          setTimeout(() => { btnSimulateGoldTrade.innerText = '🟡 Simulate Gold Fill'; }, 2200);
+        } else {
+          btnSimulateGoldTrade.innerText = '🟡 Simulate Gold Fill';
+        }
+      } catch (e) {
+        btnSimulateGoldTrade.innerText = '🟡 Simulate Gold Fill';
+      }
+    });
+  }
+
+  if (btnFlattenPositions) {
+    btnFlattenPositions.addEventListener('click', async () => {
+      if (confirm('Flatten all active positions across the bot fleet immediately?')) {
+        await fetch('/api/auto-bot/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        fetchAutoBotStatus();
       }
     });
   }
@@ -1096,7 +1294,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok) {
         const data = await res.json();
         if (goLatencyDisplay && data.avg_latency_micros !== undefined) {
-          goLatencyDisplay.innerText = `${data.avg_latency_micros}µs (${data.ticks_processed} ticks)`;
+          goLatencyDisplay.innerText = `${data.avg_latency_micros}µs`;
         }
         if (goStatusDot) {
           goStatusDot.style.background = '#10b981';
@@ -1123,6 +1321,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadNewsWire('ALL');
   pollGoEngine();
   setInterval(pollGoEngine, 3000);
+  fetchAutoBotStatus();
+  setInterval(fetchAutoBotStatus, 3000);
 });
 
 

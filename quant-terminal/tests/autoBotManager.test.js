@@ -16,6 +16,7 @@ test('AutoBotManager Suite', async (t) => {
 
   await t.test('Triggers hard stop-loss when price drops by 2%', () => {
     const manager = new AutoBotManager();
+    manager.reset('XAU-USD');
     manager.startBot('XAU-USD');
     const bot = manager.bots['XAU-USD'];
 
@@ -39,6 +40,7 @@ test('AutoBotManager Suite', async (t) => {
 
   await t.test('Triggers take-profit target when price gains 4%', () => {
     const manager = new AutoBotManager();
+    manager.reset('XAU-USD');
     manager.startBot('XAU-USD');
     const bot = manager.bots['XAU-USD'];
 

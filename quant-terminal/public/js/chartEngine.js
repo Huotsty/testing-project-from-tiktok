@@ -1,7 +1,9 @@
 /**
  * AlphaForge High-Performance Canvas Financial Chart Engine
- * Renders Candlesticks, Volume bars, Overlay Indicators (SMA, EMA, Bollinger, VWAP),
- * Execution Markers, and Subcharts (RSI, MACD, Equity Curve) with Retina HiDPI & Crosshair.
+ * Institutional-Grade Rendering for Candlesticks, Volume bars, Overlay Indicators
+ * (SMA, EMA, Bollinger, VWAP), Live Laser Price Line, Risk Bracket Overlays (SL/TP),
+ * Execution Markers, and Subcharts (RSI, MACD, Equity Curve with Gradient Fill).
+ * Optimized for Retina HiDPI displays & smooth 60fps micro-interactions.
  */
 
 class ChartEngine {
@@ -17,6 +19,7 @@ class ChartEngine {
     this.trades = [];
     this.equityCurve = [];
     this.benchmarkCurve = [];
+    this.activeBracket = null; // { entryPrice, stopLossPrice, takeProfitPrice, side }
 
     this.subchartMode = 'rsi'; // 'rsi', 'macd', 'equity'
     
@@ -30,7 +33,7 @@ class ChartEngine {
     // Viewport & Pan/Zoom
     this.candleWidth = 8;
     this.candleGap = 3;
-    this.paddingRight = 65; // Price scale margin
+    this.paddingRight = 72; // Price scale margin
     this.paddingBottom = 24; // Time scale margin
     this.viewOffset = 0; // Number of candles scrolled from right
 
@@ -72,7 +75,7 @@ class ChartEngine {
     this.mainCanvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (e.deltaY < 0) {
-        this.candleWidth = Math.min(26, this.candleWidth + 1);
+        this.candleWidth = Math.min(28, this.candleWidth + 1);
       } else {
         this.candleWidth = Math.max(3, this.candleWidth - 1);
       }
@@ -104,6 +107,11 @@ class ChartEngine {
     this.trades = trades || [];
     this.equityCurve = equityCurve || [];
     this.benchmarkCurve = benchmarkCurve || [];
+    this.render();
+  }
+
+  setActiveBracket(bracket) {
+    this.activeBracket = bracket;
     this.render();
   }
 
@@ -143,6 +151,12 @@ class ChartEngine {
       if (c.volume > maxVol) maxVol = c.volume;
     }
 
+    // Include active bracket levels in scaling so they never clip
+    if (this.activeBracket) {
+      if (this.activeBracket.stopLossPrice) minPrice = Math.min(minPrice, this.activeBracket.stopLossPrice);
+      if (this.activeBracket.takeProfitPrice) maxPrice = Math.max(maxPrice, this.activeBracket.takeProfitPrice);
+    }
+
     // Add breathing room
     const priceRange = (maxPrice - minPrice) || 1;
     minPrice -= priceRange * 0.05;
@@ -154,7 +168,7 @@ class ChartEngine {
     // Draw Price Grid & Axes
     this.drawMainGrid(ctx, plotW, plotH, minPrice, maxPrice, visibleCandles);
 
-    // Draw Volume Bars in background
+    // Draw Volume Bars in background with vertical gradient
     if (this.showVolume && maxVol > 0) {
       const volAreaH = plotH * 0.22;
       for (let i = 0; i < visibleCandles.length; i++) {
@@ -162,12 +176,36 @@ class ChartEngine {
         const cx = getX(i) - (this.candleWidth / 2);
         const barH = (c.volume / maxVol) * volAreaH;
         const cy = plotH - barH;
-        ctx.fillStyle = c.close >= c.open ? 'rgba(0, 245, 155, 0.15)' : 'rgba(255, 51, 102, 0.15)';
+        const isBullish = c.close >= c.open;
+        
+        ctx.fillStyle = isBullish 
+          ? 'rgba(0, 245, 155, 0.16)' 
+          : 'rgba(255, 51, 102, 0.16)';
         ctx.fillRect(cx, cy, this.candleWidth, barH);
       }
     }
 
-    // Draw Candlesticks
+    // Draw Bollinger Bands Overlay
+    if (this.showBB && this.indicators.bollinger) {
+      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.bollinger.upper, 'rgba(157, 78, 221, 0.8)', 1.2, getY, getX);
+      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.bollinger.middle, 'rgba(157, 78, 221, 0.4)', 1, getY, getX, [4, 4]);
+      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.bollinger.lower, 'rgba(157, 78, 221, 0.8)', 1.2, getY, getX);
+    }
+
+    // Draw EMA & SMA Overlays
+    if (this.showEma && this.indicators.ema50) {
+      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.ema50, '#38bdf8', 1.6, getY, getX);
+    }
+    if (this.showSma && this.indicators.sma20) {
+      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.sma20, '#fbbf24', 1.6, getY, getX);
+    }
+
+    // Draw VWAP Overlay
+    if (this.showVWAP && this.indicators.vwap) {
+      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.vwap, '#ec4899', 1.4, getY, getX, [3, 3]);
+    }
+
+    // Draw Candlesticks with crisp shadows
     for (let i = 0; i < visibleCandles.length; i++) {
       const c = visibleCandles[i];
       const cx = getX(i);
@@ -185,30 +223,41 @@ class ChartEngine {
       // Body
       const bodyTop = getY(Math.max(c.open, c.close));
       const bodyBottom = getY(Math.min(c.open, c.close));
-      const bodyH = Math.max(1, bodyBottom - bodyTop);
+      const bodyH = Math.max(1.5, bodyBottom - bodyTop);
 
       ctx.fillStyle = color;
       ctx.fillRect(cx - (this.candleWidth / 2), bodyTop, this.candleWidth, bodyH);
     }
 
-    // Draw Bollinger Bands Overlay
-    if (this.showBB && this.indicators.bollinger) {
-      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.bollinger.upper, 'rgba(157, 78, 221, 0.7)', 1.2, getY, getX);
-      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.bollinger.middle, 'rgba(157, 78, 221, 0.4)', 1, getY, getX, [4, 4]);
-      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.bollinger.lower, 'rgba(157, 78, 221, 0.7)', 1.2, getY, getX);
+    // Draw Active Risk Bracket Lines (SL / TP / Entry)
+    if (this.activeBracket && this.activeBracket.entryPrice) {
+      this.drawActiveBracketLines(ctx, plotW, getY);
     }
 
-    // Draw EMA & SMA Overlays
-    if (this.showEma && this.indicators.ema50) {
-      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.ema50, '#38bdf8', 1.5, getY, getX);
-    }
-    if (this.showSma && this.indicators.sma20) {
-      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.sma20, '#fbbf24', 1.5, getY, getX);
-    }
+    // Draw Live Laser Price Line
+    const lastCandle = visibleCandles[visibleCandles.length - 1];
+    if (lastCandle) {
+      const lastPrice = lastCandle.close;
+      const lastY = getY(lastPrice);
 
-    // Draw VWAP Overlay
-    if (this.showVWAP && this.indicators.vwap) {
-      this.drawSeries(ctx, visibleCandles, startIndex, this.indicators.vwap, '#ec4899', 1.2, getY, getX, [3, 3]);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.65)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, lastY);
+      ctx.lineTo(plotW, lastY);
+      ctx.stroke();
+
+      // Pulsing Laser badge on right gutter
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(plotW, lastY - 9, w - plotW, 18);
+      ctx.fillStyle = '#040812';
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(lastPrice.toFixed(2), plotW + 5, lastY + 4);
+      ctx.restore();
     }
 
     // Draw Execution Markers from Backtester / Trades
@@ -218,7 +267,6 @@ class ChartEngine {
     if (this.isHovering && this.mouseX >= 0 && this.mouseX <= plotW && this.mouseY <= plotH) {
       this.drawCrosshair(ctx, this.mouseX, this.mouseY, plotW, plotH, w, minPrice, maxPrice);
 
-      // Find hovered candle
       const hoveredIdx = Math.floor((this.mouseX - (plotW - visibleCandles.length * totalCandleSpace)) / totalCandleSpace);
       if (hoveredIdx >= 0 && hoveredIdx < visibleCandles.length) {
         const candle = visibleCandles[hoveredIdx];
@@ -226,6 +274,70 @@ class ChartEngine {
         this.updateHud(candle, globalIdx);
       }
     }
+  }
+
+  drawActiveBracketLines(ctx, plotW, getY) {
+    const { entryPrice, stopLossPrice, takeProfitPrice, side = 'BUY' } = this.activeBracket;
+
+    ctx.save();
+    // 1. Take-Profit Target Line (Green)
+    if (takeProfitPrice) {
+      const tpY = getY(takeProfitPrice);
+      ctx.strokeStyle = 'rgba(0, 245, 155, 0.85)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, tpY);
+      ctx.lineTo(plotW, tpY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(0, 245, 155, 0.9)';
+      ctx.fillRect(10, tpY - 9, 140, 18);
+      ctx.fillStyle = '#040812';
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillText(`🎯 TP: $${takeProfitPrice.toFixed(2)} (+4.0%)`, 16, tpY + 3.5);
+    }
+
+    // 2. Stop-Loss Line (Red)
+    if (stopLossPrice) {
+      const slY = getY(stopLossPrice);
+      ctx.strokeStyle = 'rgba(255, 51, 102, 0.85)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, slY);
+      ctx.lineTo(plotW, slY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255, 51, 102, 0.9)';
+      ctx.fillRect(10, slY - 9, 140, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillText(`🛡️ SL: $${stopLossPrice.toFixed(2)} (-2.0%)`, 16, slY + 3.5);
+    }
+
+    // 3. Entry Price Line (Cyan)
+    if (entryPrice) {
+      const enY = getY(entryPrice);
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.8)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, enY);
+      ctx.lineTo(plotW, enY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.85)';
+      ctx.fillRect(10, enY - 9, 125, 18);
+      ctx.fillStyle = '#040812';
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillText(`⚡ ENTRY: $${entryPrice.toFixed(2)}`, 16, enY + 3.5);
+    }
+
+    ctx.restore();
   }
 
   drawSeries(ctx, visibleCandles, startIndex, dataSeries, color, lineWidth = 1.5, getY, getX, dash = []) {
@@ -292,7 +404,7 @@ class ChartEngine {
   }
 
   drawMainGrid(ctx, plotW, plotH, minPrice, maxPrice, visibleCandles) {
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
     ctx.lineWidth = 1;
 
     // Horizontal Price Lines & Labels
@@ -309,7 +421,7 @@ class ChartEngine {
       ctx.fillStyle = '#64748b';
       ctx.font = '10px "JetBrains Mono", monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(p.toFixed(2), plotW + 8, y + 3);
+      ctx.fillText(p.toFixed(2), plotW + 7, y + 3.5);
     }
 
     // Vertical Time Lines
@@ -332,7 +444,7 @@ class ChartEngine {
 
   drawCrosshair(ctx, mouseX, mouseY, plotW, plotH, totalW, minPrice, maxPrice) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
 
@@ -428,7 +540,6 @@ class ChartEngine {
     const macd = this.indicators.macd;
     if (!macd || !macd.histogram) return;
 
-    // Scaling
     let maxAbs = 0.01;
     for (let i = 0; i < visibleCandles.length; i++) {
       const idx = startIndex + i;
@@ -495,12 +606,46 @@ class ChartEngine {
     maxEq += range * 0.05;
     const getY = (val) => plotH - ((val - minEq) / (maxEq - minEq)) * plotH;
 
-    // Draw Benchmark line (gray)
+    // Draw Benchmark line (gray dashed)
     const bmSeries = this.benchmarkCurve.map(b => b.equity);
-    this.drawSeries(ctx, visibleCandles, startIndex, bmSeries, 'rgba(148, 163, 184, 0.6)', 1.2, getY, getX, [4, 4]);
+    this.drawSeries(ctx, visibleCandles, startIndex, bmSeries, 'rgba(148, 163, 184, 0.5)', 1.2, getY, getX, [4, 4]);
+
+    // Draw Gradient Area fill under Strategy Equity curve
+    const eqSeries = this.equityCurve.map(e => e.equity);
+    ctx.save();
+    const areaGrad = ctx.createLinearGradient(0, 0, 0, plotH);
+    areaGrad.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
+    areaGrad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+    ctx.fillStyle = areaGrad;
+    ctx.beginPath();
+    let started = false;
+    let firstX = 0;
+    let lastX = 0;
+
+    for (let i = 0; i < visibleCandles.length; i++) {
+      const val = eqSeries[startIndex + i];
+      if (val !== undefined && val !== null) {
+        const x = getX(i);
+        const y = getY(val);
+        if (!started) {
+          ctx.moveTo(x, plotH);
+          ctx.lineTo(x, y);
+          firstX = x;
+          started = true;
+        } else {
+          ctx.lineTo(x, y);
+        }
+        lastX = x;
+      }
+    }
+    if (started) {
+      ctx.lineTo(lastX, plotH);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
 
     // Draw Strategy Equity line (Cyan neon)
-    const eqSeries = this.equityCurve.map(e => e.equity);
     this.drawSeries(ctx, visibleCandles, startIndex, eqSeries, '#00f0ff', 2, getY, getX);
 
     // Labels
