@@ -1,0 +1,8 @@
+# C++ Compiled Executables & Objects
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
