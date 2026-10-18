@@ -4,12 +4,15 @@
  * with institutional risk guards: Hard Stop-Loss (-2%), Take-Profit (+4-5%), and AI Regime Filter.
  */
 
+const fs = require('fs');
+const path = require('path');
 const Indicators = require('../core/indicators');
 const RegimeFilter = require('../core/regimeFilter');
 
 class AutoBotManager {
   constructor(telegramService = null) {
     this.telegramService = telegramService;
+    this.ledgerFile = path.join(__dirname, '../bot_ledger.json');
     
     const defaultCapital = process.env.INITIAL_CAPITAL ? parseFloat(process.env.INITIAL_CAPITAL) : 20.00;
 
@@ -60,6 +63,48 @@ class AutoBotManager {
     };
 
     this.listeners = new Set();
+    this.loadState();
+  }
+
+  loadState() {
+    try {
+      if (fs.existsSync(this.ledgerFile)) {
+        const saved = JSON.parse(fs.readFileSync(this.ledgerFile, 'utf8'));
+        if (saved && saved.bots) {
+          for (const sym of Object.keys(saved.bots)) {
+            if (this.bots[sym]) {
+              const b = this.bots[sym];
+              const s = saved.bots[sym];
+              b.cash = s.cash !== undefined ? s.cash : b.cash;
+              b.initialCapital = s.initialCapital !== undefined ? s.initialCapital : b.initialCapital;
+              b.position = s.position || 0;
+              b.entryPrice = s.entryPrice || 0;
+              b.realizedPnL = s.realizedPnL || 0;
+              b.totalTrades = s.totalTrades || 0;
+              b.winTrades = s.winTrades || 0;
+              b.lossTrades = s.lossTrades || 0;
+              b.winRatePct = s.winRatePct || 0;
+              b.trades = Array.isArray(s.trades) ? s.trades : [];
+              b.active = !!s.active;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[LEDGER] Could not restore saved bot state:', e.message);
+    }
+  }
+
+  saveState() {
+    try {
+      const payload = {
+        updatedAt: new Date().toISOString(),
+        bots: this.bots
+      };
+      fs.writeFileSync(this.ledgerFile, JSON.stringify(payload, null, 2));
+    } catch (e) {
+      console.warn('[LEDGER] Could not persist bot state:', e.message);
+    }
   }
 
   addListener(callback) {
@@ -125,6 +170,7 @@ class AutoBotManager {
       b.lossTrades = 0;
       b.winRatePct = 0;
       b.trades = [];
+      this.saveState();
       return true;
     }
     return false;
@@ -263,7 +309,7 @@ class AutoBotManager {
     }
 
     // 7. Order Execution
-    if (signal === 'BUY' && bot.position === 0 && bot.cash > 100) {
+    if (signal === 'BUY' && bot.position === 0 && bot.cash >= 2.00) {
       this.executeBuy(bot, currentPrice, reason, regimeInfo);
     } else if (signal === 'SELL' && bot.position > 0) {
       this.executeSell(bot, currentPrice, reason);
@@ -273,7 +319,9 @@ class AutoBotManager {
   executeBuy(bot, currentPrice, reason, regimeInfo) {
     const slippage = currentPrice * 0.0005; // 0.05% slippage simulation
     const fillPrice = currentPrice + slippage;
-    const alloc = bot.cash * 0.99; // 99% allocation
+    
+    // Balanced allocation: Allocate max 50% per trade (leaving room for concurrent Gold & BTC bots)
+    const alloc = bot.cash >= 10.00 ? Math.min(bot.cash * 0.50, 10.00) : Number((bot.cash * 0.95).toFixed(2));
     const units = alloc / fillPrice;
 
     const decimals = bot.symbol.includes('BTC') ? 8 : 6;
@@ -294,6 +342,7 @@ class AutoBotManager {
     };
 
     bot.trades.push(tradeRecord);
+    this.saveState();
 
     const alertMsg = `🤖 [${bot.name}] 🟢 BUY FILLED\n` +
                      `Asset: ${bot.symbol}\n` +
@@ -364,6 +413,7 @@ class AutoBotManager {
       this.telegramService.sendCustomAlert(alertMsg);
     }
 
+    this.saveState();
     this.broadcast({ type: 'ORDER_FILLED', action: 'SELL', trade: tradeRecord, bot: this.getBotStatus(bot.symbol) });
   }
 
