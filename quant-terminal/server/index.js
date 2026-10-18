@@ -42,7 +42,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 const marketGen = new MarketGenerator();
-telegramService.serverRef = { marketGen, newsService };
+telegramService.serverRef = { marketGen, newsService, autoBotManager };
 const orderBooks = {};
 for (const symbol of Object.keys(marketGen.assets)) {
   orderBooks[symbol] = new OrderBook(symbol, marketGen.assets[symbol].initialPrice);

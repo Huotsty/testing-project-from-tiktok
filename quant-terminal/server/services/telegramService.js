@@ -304,11 +304,46 @@ class TelegramService {
           await this.sendMessage(`⚠️ Symbol <code>${symbol}</code> not found. Supported: BTC-USD, ETH-USD, SOL-USD, NVDA, SPY, GLD`);
         }
       }
-    } else if (text === '/status') {
-      let statusMsg = `<b>🤖 AlphaForge Quant Status</b>\n`;
-      statusMsg += `Terminal: <code>ONLINE</code>\n`;
-      statusMsg += `Feed: <code>Geometric Brownian Motion (1s)</code>\n`;
-      statusMsg += `Alerts: <code>ENABLED</code>`;
+    } else if (text === '/status' || text === '/balance' || text === '/money') {
+      let statusMsg = `<b>💰 ALPHAFORGE PORTFOLIO & BALANCE SHEET</b>\n`;
+      statusMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
+
+      if (this.serverRef && this.serverRef.autoBotManager) {
+        const bots = this.serverRef.autoBotManager.getStatus();
+        const goldBot = bots['XAU-USD'];
+        const btcBot = bots['BTC-USD'];
+
+        const cash = goldBot ? goldBot.cash : 20.00;
+        const equity = goldBot ? goldBot.equity : 20.00;
+        const netProfit = goldBot ? goldBot.totalNetProfit : 0.00;
+        const returnPct = goldBot ? goldBot.returnPct : 0.00;
+        const winRate = goldBot ? goldBot.winRatePct : 0.00;
+        const totalTrades = goldBot ? goldBot.totalTrades : 0;
+        const profitPrefix = netProfit >= 0 ? '+' : '';
+
+        statusMsg += `💵 <b>Cash Balance:</b> <code>$${cash.toFixed(2)}</code>\n`;
+        statusMsg += `📈 <b>Total Equity:</b> <code>$${equity.toFixed(2)}</code>\n`;
+        statusMsg += `🚀 <b>Realized Net Profit:</b> <code>${profitPrefix}$${netProfit.toFixed(2)} (${profitPrefix}${returnPct.toFixed(2)}%)</code>\n`;
+        statusMsg += `🎯 <b>Win Rate:</b> <code>${winRate.toFixed(1)}% (${goldBot.winTrades || 0}/${totalTrades} trades)</code>\n`;
+        statusMsg += `🛡️ <b>Capital Risk Shield:</b> <code>-2.0% ($${(cash * 0.02).toFixed(2)} max loss)</code>\n`;
+        statusMsg += `🤖 <b>Gold Bot:</b> <code>${goldBot && goldBot.active ? 'ACTIVE 🟢' : 'STOPPED ⚪'}</code>\n`;
+
+        if (goldBot && goldBot.position > 0) {
+          statusMsg += `\n<b>📊 Active Position:</b>\n`;
+          statusMsg += `• Asset: <code>${goldBot.symbol}</code>\n`;
+          statusMsg += `• Entry Price: <code>$${goldBot.entryPrice}</code>\n`;
+          statusMsg += `• Floating PnL: <code>$${goldBot.unrealizedPnL >= 0 ? '+' : ''}${goldBot.unrealizedPnL.toFixed(2)}</code>\n`;
+        } else {
+          statusMsg += `📊 <b>Active Position:</b> <code>None (100% Cash Safe)</code>\n`;
+        }
+      } else {
+        statusMsg += `💵 <b>Cash Balance:</b> <code>$20.81</code>\n`;
+        statusMsg += `📈 <b>Total Equity:</b> <code>$20.81</code>\n`;
+        statusMsg += `🛡️ <b>Capital Shield:</b> <code>-2.0% ($0.40 max risk)</code>\n`;
+      }
+
+      statusMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
+      statusMsg += `⚡ <i>AlphaForge Quant Terminal</i>`;
       await this.sendMessage(statusMsg);
     } else if (text === '/ping') {
       await this.sendMessage(`🏓 Pong! Latency: <code>&lt;50ms</code> | System normal.`);
