@@ -145,7 +145,7 @@ class AutoBotManager {
       active: b.active,
       cash: Number(b.cash.toFixed(2)),
       equity: Number(equity.toFixed(2)),
-      position: Number(b.position.toFixed(4)),
+      position: Number(b.position.toFixed(b.symbol.includes('BTC') ? 8 : 4)),
       entryPrice: Number(b.entryPrice.toFixed(2)),
       lastPrice: Number(currentPrice.toFixed(2)),
       unrealizedPnL: Number(b.unrealizedPnL.toFixed(2)),
@@ -276,7 +276,8 @@ class AutoBotManager {
     const alloc = bot.cash * 0.99; // 99% allocation
     const units = alloc / fillPrice;
 
-    bot.position = Number(units.toFixed(4));
+    const decimals = bot.symbol.includes('BTC') ? 8 : 6;
+    bot.position = Number(units.toFixed(decimals));
     bot.entryPrice = fillPrice;
     bot.cash = Number((bot.cash - alloc).toFixed(2));
 
@@ -371,14 +372,24 @@ class AutoBotManager {
    */
   async simulateRealTrade(symbol = 'XAU-USD', targetOutcome = 'TAKE_PROFIT') {
     const bot = this.bots[symbol] || this.bots['XAU-USD'];
-    const currentPrice = bot.lastPrice || 2752.40;
+    let currentPrice = bot.lastPrice;
+    if (!currentPrice || currentPrice <= 0) {
+      if (symbol.includes('BTC')) currentPrice = 81750.00;
+      else if (symbol.includes('ETH')) currentPrice = 2410.00;
+      else currentPrice = 2752.40;
+    }
+
+    const isBtc = symbol.includes('BTC');
+    const signalReason = isBtc
+      ? 'BOLLINGER_LOWER_REVERSION: Price bounced from lower 2.0σ band + RSI(31.2) + Institutional Bid Depth'
+      : 'ALPHA_GOLDEN_CROSS: EMA9 > EMA21 + RSI(54.2) + Bullish Order Flow Imbalance (OBI +0.22)';
 
     // 1. Execute Realistic BUY entry with bracket orders
     this.executeBuy(
       bot,
       currentPrice,
-      'ALPHA_GOLDEN_CROSS: EMA9 > EMA21 + RSI(54.2) + Bullish Order Flow Imbalance (OBI +0.22)',
-      { regime: 'HEALTHY_BULL_MOMENTUM' }
+      signalReason,
+      { regime: isBtc ? 'VOLATILITY_EXPANSION' : 'HEALTHY_BULL_MOMENTUM' }
     );
 
     const buyTrade = bot.trades[bot.trades.length - 1];
