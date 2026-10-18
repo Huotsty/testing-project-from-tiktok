@@ -11,6 +11,8 @@ class AutoBotManager {
   constructor(telegramService = null) {
     this.telegramService = telegramService;
     
+    const defaultCapital = process.env.INITIAL_CAPITAL ? parseFloat(process.env.INITIAL_CAPITAL) : 20.00;
+
     // Configured asset-specific bots
     this.bots = {
       'XAU-USD': {
@@ -19,8 +21,8 @@ class AutoBotManager {
         strategy: 'smaCrossover',
         params: { fastPeriod: 9, slowPeriod: 21, maType: 'EMA' },
         active: false,
-        cash: 10000.00,
-        initialCapital: 10000.00,
+        cash: defaultCapital,
+        initialCapital: defaultCapital,
         position: 0,
         entryPrice: 0,
         stopLossPct: 2.0,      // Hard stop at -2%
@@ -40,8 +42,8 @@ class AutoBotManager {
         strategy: 'bollingerReversion',
         params: { period: 20, multiplier: 2 },
         active: false,
-        cash: 10000.00,
-        initialCapital: 10000.00,
+        cash: defaultCapital,
+        initialCapital: defaultCapital,
         position: 0,
         entryPrice: 0,
         stopLossPct: 2.0,      // Hard stop at -2%
