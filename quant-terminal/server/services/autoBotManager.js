@@ -365,6 +365,48 @@ class AutoBotManager {
 
     this.broadcast({ type: 'ORDER_FILLED', action: 'SELL', trade: tradeRecord, bot: this.getBotStatus(bot.symbol) });
   }
+
+  /**
+   * Run a realistic end-to-end simulated trade cycle matching real-world broker execution
+   */
+  async simulateRealTrade(symbol = 'XAU-USD', targetOutcome = 'TAKE_PROFIT') {
+    const bot = this.bots[symbol] || this.bots['XAU-USD'];
+    const currentPrice = bot.lastPrice || 2752.40;
+
+    // 1. Execute Realistic BUY entry with bracket orders
+    this.executeBuy(
+      bot,
+      currentPrice,
+      'ALPHA_GOLDEN_CROSS: EMA9 > EMA21 + RSI(54.2) + Bullish Order Flow Imbalance (OBI +0.22)',
+      { regime: 'HEALTHY_BULL_MOMENTUM' }
+    );
+
+    const buyTrade = bot.trades[bot.trades.length - 1];
+
+    // Wait 2.5 seconds to simulate in-flight market movement
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    // 2. Execute Exit based on target outcome
+    let exitPrice = 0;
+    let exitReason = '';
+
+    if (targetOutcome === 'STOP_LOSS') {
+      exitPrice = bot.entryPrice * (1 - bot.stopLossPct / 100);
+      exitReason = `🚨 HARD STOP-LOSS HIT (-${bot.stopLossPct.toFixed(2)}%) - 2% Capital Guard Preserved`;
+    } else {
+      exitPrice = bot.entryPrice * (1 + bot.takeProfitPct / 100);
+      exitReason = `🎯 TAKE-PROFIT TARGET HIT (+${bot.takeProfitPct.toFixed(2)}%) - Asymmetric 1:2 Payoff Secured`;
+    }
+
+    this.executeSell(bot, exitPrice, exitReason);
+    const sellTrade = bot.trades[bot.trades.length - 1];
+
+    return {
+      success: true,
+      bot: this.getBotStatus(bot.symbol),
+      trades: { buy: buyTrade, sell: sellTrade }
+    };
+  }
 }
 
 module.exports = AutoBotManager;

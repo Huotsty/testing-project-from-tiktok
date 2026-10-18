@@ -85,12 +85,15 @@ class TelegramService {
     }
 
     return new Promise((resolve) => {
-      const payload = JSON.stringify({
+      const payloadObj = {
         chat_id: this.chatId,
         text: text,
-        parse_mode: parseMode,
         disable_web_page_preview: true
-      });
+      };
+      if (parseMode) {
+        payloadObj.parse_mode = parseMode;
+      }
+      const payload = JSON.stringify(payloadObj);
 
       const options = {
         hostname: 'api.telegram.org',
@@ -167,6 +170,13 @@ class TelegramService {
     msg += `⚡ <i>AlphaForge Quant Paper Engine</i>`;
 
     return this.sendMessage(msg);
+  }
+
+  /**
+   * Send a custom formatted text alert directly
+   */
+  async sendCustomAlert(msg) {
+    return this.sendMessage(msg, '');
   }
 
   /**

@@ -445,6 +445,16 @@ app.post('/api/auto-bot/reset', (req, res) => {
   res.json({ success: true, bots: autoBotManager.getStatus() });
 });
 
+app.post('/api/auto-bot/simulate-trade', async (req, res) => {
+  const { symbol = 'XAU-USD', outcome = 'TAKE_PROFIT' } = req.body || {};
+  try {
+    const result = await autoBotManager.simulateRealTrade(symbol, outcome);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Stream real-world ticks directly into terminal
 liveFeedService.onTick((tick) => {
   if (feedMode !== 'LIVE_REAL') return;
