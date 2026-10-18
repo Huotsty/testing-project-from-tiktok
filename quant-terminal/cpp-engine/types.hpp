@@ -47,17 +47,28 @@ struct alignas(64) Position {
     double quantity;
     double stop_loss_price;
     double take_profit_price;
-    double unrealized_pnl;
-    double pnl_percent;
+    double gross_pnl;
+    double total_fees;      // Entry commission + exit commission + spread drag
+    double net_pnl;         // Gross PnL - Total Fees
+    double net_pnl_percent; // Net PnL % after all broker fees
     bool is_open;
 };
 
 struct RiskConfig {
-    double max_loss_percent      = 2.0; // Hard stop at -2%
-    double take_profit_percent   = 4.0; // 1:2 asymmetric payoff (+4%)
-    double trailing_lock_percent = 1.5; // Lock at breakeven + buffer once +1.5%
-    double micro_account_balance = 20.0; // $20.00 micro capital
+    double max_loss_percent       = 2.0;  // Hard stop at -2% NET of fees
+    double take_profit_percent    = 4.0;  // 1:2 asymmetric payoff (+4% NET of fees)
+    double trailing_lock_percent  = 1.5;  // Lock at breakeven + fee buffer once +1.5%
+    double micro_account_balance  = 20.0; // $20.00 micro capital
     double max_risk_per_trade_usd = 0.40; // 2% of $20 = $0.40
+    
+    // Broker Fee & Spread Armor
+    double broker_taker_fee_pct   = 0.08; // 0.08% taker commission (standard Binance/Capital.com)
+    double broker_maker_fee_pct   = 0.04; // 0.04% maker commission
+    double estimated_spread_pct   = 0.02; // ~0.02% typical bid/ask spread on Spot Gold ($0.50/oz)
+    double max_allowed_spread_pct = 0.05; // Spread gate: reject entry if spread > 0.05% (news spikes)
+    double min_alpha_hurdle_pct   = 0.45; // Minimum signal profit hurdle before taking trade
+    double total_fees_paid_usd    = 0.0;  // Cumulative broker commission tracker
 };
 
 } // namespace alphaforge
+

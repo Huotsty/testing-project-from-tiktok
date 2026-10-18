@@ -18,11 +18,15 @@ public:
         active_position_.is_open = false;
     }
 
-    inline bool can_enter_trade(const uint64_t current_ns) const noexcept {
+    inline bool can_enter_trade(const uint64_t current_ns, const double current_spread_pct = 0.02) const noexcept {
         if (active_position_.is_open) [[unlikely]] {
             return false;
         }
-        // 5-second cooldown to avoid churn
+        // Spread Gate: Protect against spread-widening during news or off-market hours
+        if (current_spread_pct > config_.max_allowed_spread_pct) [[unlikely]] {
+            return false; // Spread is too wide; broker fee/slippage would eat profits
+        }
+        // 5-second cooldown to avoid churn and excessive commissions
         if (current_ns > 0 && last_trade_ns_ > 0) {
             if ((current_ns - last_trade_ns_) < 5000000000ULL) {
                 return false;
@@ -32,8 +36,17 @@ public:
     }
 
     inline Position open_position(const char* symbol, const double entry_price, const uint64_t current_ns) noexcept {
-        const double sl = entry_price * (1.0 - (config_.max_loss_percent * 0.01));
-        const double tp = entry_price * (1.0 + (config_.take_profit_percent * 0.01));
+        // Calculate round-trip broker drag (entry commission + exit commission + half-spread)
+        const double round_trip_fee_pct = (config_.broker_taker_fee_pct * 2.0) + config_.estimated_spread_pct;
+
+        // Compensate brackets so user secures NET +4% and stops at NET -2%
+        const double net_adjusted_tp_pct = config_.take_profit_percent + round_trip_fee_pct;
+        const double net_adjusted_sl_pct = (config_.max_loss_percent > round_trip_fee_pct) 
+                                           ? (config_.max_loss_percent - round_trip_fee_pct)
+                                           : (config_.max_loss_percent * 0.5);
+
+        const double sl = entry_price * (1.0 - (net_adjusted_sl_pct * 0.01));
+        const double tp = entry_price * (1.0 + (net_adjusted_tp_pct * 0.01));
         const double alloc_usd = config_.micro_account_balance * 0.50; // Max 50% allocation
         const double qty = alloc_usd / entry_price;
 
@@ -43,53 +56,70 @@ public:
         active_position_.quantity = qty;
         active_position_.stop_loss_price = sl;
         active_position_.take_profit_price = tp;
-        active_position_.unrealized_pnl = 0.0;
-        active_position_.pnl_percent = 0.0;
+        active_position_.gross_pnl = 0.0;
+        active_position_.total_fees = alloc_usd * (round_trip_fee_pct * 0.01);
+        active_position_.net_pnl = -active_position_.total_fees;
+        active_position_.net_pnl_percent = -round_trip_fee_pct;
         active_position_.is_open = true;
 
         last_trade_ns_ = current_ns;
         return active_position_;
     }
 
-    // Inlined risk check executed on every tick in < 5 nanoseconds
+    // Inlined risk & fee check executed on every tick in < 5 nanoseconds
     inline bool evaluate_tick(const double current_price, Signal& out_signal, const uint64_t current_ns) noexcept {
         if (!active_position_.is_open) [[likely]] {
             return false;
         }
 
         active_position_.current_price = current_price;
-        const double pnl_pct = ((current_price - active_position_.entry_price) / active_position_.entry_price) * 100.0;
-        active_position_.pnl_percent = pnl_pct;
-        active_position_.unrealized_pnl = (current_price - active_position_.entry_price) * active_position_.quantity;
+        const double position_val = active_position_.quantity * active_position_.entry_price;
+        const double current_val = active_position_.quantity * current_price;
 
-        // 1. Dynamic Trailing Stop Lock: If up +1.5%, advance Stop-Loss to +0.5% (guaranteed win)
-        if (pnl_pct >= config_.trailing_lock_percent) [[unlikely]] {
-            const double trailed_sl = active_position_.entry_price * 1.005;
+        // Accurate fee breakdown: Entry Commission + Exit Commission + Spread Cost
+        const double entry_comm = position_val * (config_.broker_taker_fee_pct * 0.01);
+        const double exit_comm  = current_val * (config_.broker_taker_fee_pct * 0.01);
+        const double spread_cost = position_val * (config_.estimated_spread_pct * 0.01);
+        const double round_trip_fees = entry_comm + exit_comm + spread_cost;
+
+        active_position_.gross_pnl = current_val - position_val;
+        active_position_.total_fees = round_trip_fees;
+        active_position_.net_pnl = active_position_.gross_pnl - round_trip_fees;
+        active_position_.net_pnl_percent = (active_position_.net_pnl / position_val) * 100.0;
+
+        // 1. Dynamic Trailing Stop Lock: If NET profit reaches +1.5%, lock SL at +0.5% NET
+        if (active_position_.net_pnl_percent >= config_.trailing_lock_percent) [[unlikely]] {
+            const double fee_buffer_pct = (round_trip_fees / position_val) * 100.0;
+            const double trailed_sl = active_position_.entry_price * (1.0 + ((0.5 + fee_buffer_pct) * 0.01));
             if (trailed_sl > active_position_.stop_loss_price) {
                 active_position_.stop_loss_price = trailed_sl;
             }
         }
 
-        // 2. Take-Profit hit (+4%)
+        // 2. Take-Profit hit (Target NET +4.0% in pocket)
         if (current_price >= active_position_.take_profit_price) [[unlikely]] {
             out_signal.action = SignalAction::SELL;
             out_signal.price = current_price;
             out_signal.confidence = 1.0;
             std::snprintf(out_signal.reason, sizeof(out_signal.reason),
-                "TAKE_PROFIT_TRIGGERED (+%.2f%% | +$%.4f)", pnl_pct, active_position_.unrealized_pnl);
-            config_.micro_account_balance += active_position_.unrealized_pnl;
+                "TAKE_PROFIT_TRIGGERED (Net +%.2f%% | Net +$%.4f | Broker Fee -$%.4f)",
+                active_position_.net_pnl_percent, active_position_.net_pnl, round_trip_fees);
+            config_.micro_account_balance += active_position_.net_pnl;
+            config_.total_fees_paid_usd += round_trip_fees;
             active_position_.is_open = false;
             return true;
         }
 
-        // 3. Stop-Loss hit (-2% hard stop)
+        // 3. Stop-Loss hit (Hard NET -2.0% Capital Stop)
         if (current_price <= active_position_.stop_loss_price) [[unlikely]] {
             out_signal.action = SignalAction::SELL;
             out_signal.price = current_price;
             out_signal.confidence = 1.0;
             std::snprintf(out_signal.reason, sizeof(out_signal.reason),
-                "STOP_LOSS_SHIELD (-%.2f%% | -$%.4f)", pnl_pct, -active_position_.unrealized_pnl);
-            config_.micro_account_balance += active_position_.unrealized_pnl;
+                "STOP_LOSS_SHIELD (Net %.2f%% | Net -$%.4f | Broker Fee -$%.4f)",
+                active_position_.net_pnl_percent, -active_position_.net_pnl, round_trip_fees);
+            config_.micro_account_balance += active_position_.net_pnl;
+            config_.total_fees_paid_usd += round_trip_fees;
             active_position_.is_open = false;
             return true;
         }

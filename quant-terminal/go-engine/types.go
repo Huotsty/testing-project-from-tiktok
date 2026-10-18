@@ -56,19 +56,27 @@ type Position struct {
 	Quantity        float64   `json:"quantity"`
 	StopLossPrice   float64   `json:"stop_loss_price"`
 	TakeProfitPrice float64   `json:"take_profit_price"`
-	UnrealizedPnL   float64   `json:"unrealized_pnl"`
-	PnLPercent      float64   `json:"pnl_percent"`
+	GrossPnL        float64   `json:"gross_pnl"`
+	TotalFees       float64   `json:"total_fees"`
+	NetPnL          float64   `json:"net_pnl"`
+	NetPnLPercent   float64   `json:"net_pnl_percent"`
 	EntryTime       time.Time `json:"entry_time"`
 	Status          string    `json:"status"` // "OPEN", "CLOSED_TP", "CLOSED_SL"
 }
 
 // RiskConfig enforces strict, non-negotiable capital preservation rules
 type RiskConfig struct {
-	MaxLossPercent       float64 `json:"max_loss_percent"`       // Default 2.0%
-	TakeProfitPercent    float64 `json:"take_profit_percent"`    // Default 4.0% (1:2 R:R)
-	TrailingLockPercent  float64 `json:"trailing_lock_percent"`  // Default 1.5%
+	MaxLossPercent       float64 `json:"max_loss_percent"`       // Default 2.0% NET
+	TakeProfitPercent    float64 `json:"take_profit_percent"`    // Default 4.0% NET
+	TrailingLockPercent  float64 `json:"trailing_lock_percent"`  // Default 1.5% NET
 	MicroAccountBalance  float64 `json:"micro_account_balance"`  // e.g. $10.00 - $20.00
 	MaxRiskPerTradeUSD   float64 `json:"max_risk_per_trade_usd"` // e.g. $0.40 on a $20 balance
+	BrokerTakerFeePct    float64 `json:"broker_taker_fee_pct"`   // 0.08% taker fee
+	BrokerMakerFeePct    float64 `json:"broker_maker_fee_pct"`   // 0.04% maker fee
+	EstimatedSpreadPct   float64 `json:"estimated_spread_pct"`   // 0.02% spread on Spot Gold
+	MaxAllowedSpreadPct  float64 `json:"max_allowed_spread_pct"` // 0.05% spread gate killswitch
+	MinAlphaHurdlePct    float64 `json:"min_alpha_hurdle_pct"`   // 0.45% minimum profit hurdle
+	TotalFeesPaidUSD     float64 `json:"total_fees_paid_usd"`    // Cumulative commissions paid
 }
 
 // EngineStatus reports runtime health and latency benchmarks

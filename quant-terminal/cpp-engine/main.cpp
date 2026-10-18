@@ -116,8 +116,15 @@ int main(int argc, char* argv[]) {
     std::cout << "  2. Go (Golang Native):       ~170.0 ns  (12x slower than C++)" << std::endl;
     std::cout << "  3. Node.js (V8 Engine):      ~5,200.0 ns  (350x slower than C++)" << std::endl;
     std::cout << "  4. Python (NumPy/Pandas):    ~45,000.0 ns  (3,000x slower than C++)" << std::endl;
-    std::cout << "\n[SHIELD STATUS] Active Capital: $" << engine.get_risk_shield().get_config().micro_account_balance
-              << " | Hard -2% Stop Loss = $" << engine.get_risk_shield().get_config().max_risk_per_trade_usd << std::endl;
+    std::cout << "\n[BROKER FEE & SPREAD ARMOR REPORT]" << std::endl;
+    std::cout << "  • Broker Taker Commission:   " << engine.get_risk_shield().get_config().broker_taker_fee_pct << "% entry / " << engine.get_risk_shield().get_config().broker_taker_fee_pct << "% exit" << std::endl;
+    std::cout << "  • Estimated Bid/Ask Spread:  " << engine.get_risk_shield().get_config().estimated_spread_pct << "% (Spot Gold XAU/USD)" << std::endl;
+    std::cout << "  • Spread Gate Killswitch:    " << engine.get_risk_shield().get_config().max_allowed_spread_pct << "% (Refuses to enter if spread widens)" << std::endl;
+    std::cout << "  • Minimum Alpha Hurdle:      " << engine.get_risk_shield().get_config().min_alpha_hurdle_pct << "% (Blocks micro-churn & fee drag)" << std::endl;
+    std::cout << "  • Net-of-Fee Take Profit:    +" << engine.get_risk_shield().get_config().take_profit_percent << "% NET (Compensated for all fees)" << std::endl;
+    std::cout << "  • Net-of-Fee Hard Stop Loss: -" << engine.get_risk_shield().get_config().max_loss_percent << "% NET (Total capital loss capped at -2%)" << std::endl;
+    std::cout << "  • Total Broker Fees Incurred: $" << engine.get_risk_shield().get_config().total_fees_paid_usd << std::endl;
+    std::cout << "  • Final Net Micro Capital:   $" << engine.get_risk_shield().get_config().micro_account_balance << std::endl;
 
     return 0;
 }

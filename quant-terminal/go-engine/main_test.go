@@ -31,7 +31,7 @@ func BenchmarkEngineTickProcessing(b *testing.B) {
 		ind := engine.pipeline.UpdateTick(price, 1.0, false)
 		shouldClose, _, _ := engine.riskShield.EvaluateRisk(price)
 		if !shouldClose && ind.Ready {
-			canEnter, _ := engine.riskShield.CanEnterTrade()
+			canEnter, _ := engine.riskShield.CanEnterTrade(0.02)
 			if canEnter && ind.FastEMA > ind.SlowEMA {
 				engine.riskShield.OpenPosition("paxgusdt", price)
 			}

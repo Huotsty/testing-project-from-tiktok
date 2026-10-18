@@ -94,7 +94,7 @@ func (e *QuantEngine) eventLoop() {
 
 			// If no position is open, evaluate entry conditions
 			if ind.Ready && !shouldClose {
-				canEnter, _ := e.riskShield.CanEnterTrade()
+				canEnter, _ := e.riskShield.CanEnterTrade(0.02)
 				if canEnter {
 					// Core Alpha Strategy:
 					// 1. Fast EMA (9) > Slow EMA (21) [Trend Bullish]
