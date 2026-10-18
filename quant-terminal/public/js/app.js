@@ -1086,6 +1086,32 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(() => {});
 
+  // Go Engine real-time health & latency telemetry
+  const goLatencyDisplay = document.getElementById('goLatencyDisplay');
+  const goStatusDot = document.getElementById('goStatusDot');
+
+  async function pollGoEngine() {
+    try {
+      const res = await fetch('http://localhost:4050/health');
+      if (res.ok) {
+        const data = await res.json();
+        if (goLatencyDisplay && data.avg_latency_micros !== undefined) {
+          goLatencyDisplay.innerText = `${data.avg_latency_micros}µs (${data.ticks_processed} ticks)`;
+        }
+        if (goStatusDot) {
+          goStatusDot.style.background = '#10b981';
+          goStatusDot.style.boxShadow = '0 0 6px #10b981';
+        }
+      }
+    } catch (err) {
+      if (goLatencyDisplay) goLatencyDisplay.innerText = 'OFFLINE';
+      if (goStatusDot) {
+        goStatusDot.style.background = '#ef4444';
+        goStatusDot.style.boxShadow = 'none';
+      }
+    }
+  }
+
   // Initialize
   renderStrategyParams();
   loadAssets();
@@ -1095,6 +1121,8 @@ document.addEventListener('DOMContentLoaded', () => {
   connectWebSocket();
   checkTelegramStatus();
   loadNewsWire('ALL');
+  pollGoEngine();
+  setInterval(pollGoEngine, 3000);
 });
 
 

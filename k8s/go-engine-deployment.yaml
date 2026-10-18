@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alphaforge-go-engine
+  labels:
+    app: alphaforge-go-engine
+    tier: hft-execution
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alphaforge-go-engine
+  template:
+    metadata:
+      labels:
+        app: alphaforge-go-engine
+        tier: hft-execution
+    spec:
+      containers:
+      - name: go-engine
+        image: alphaforge/go-engine:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 4050
+          name: hft-api
+        env:
+        - name: SYMBOL
+          value: "paxgusdt"
+        - name: RISK_STOP_LOSS
+          value: "2.0"
+        - name: RISK_TAKE_PROFIT
+          value: "4.0"
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "256Mi"
+          requests:
+            cpu: "50m"
+            memory: "32Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4050
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4050
+          initialDelaySeconds: 2
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alphaforge-go-engine-service
+  labels:
+    app: alphaforge-go-engine
+spec:
+  type: ClusterIP
+  ports:
+  - port: 4050
+    targetPort: 4050
+    protocol: TCP
+    name: hft-api
+  selector:
+    app: alphaforge-go-engine

@@ -60,6 +60,29 @@ services:
       retries: 3
       start_period: 5s
 
+  # ==========================================
+  # AlphaForge Ultra-HFT Go Engine (Native Machine Code)
+  # ==========================================
+  quant-go-engine:
+    build:
+      context: ./quant-terminal/go-engine
+      dockerfile: Dockerfile
+    container_name: alphaforge-go-engine
+    restart: unless-stopped
+    ports:
+      - "4050:4050"
+    environment:
+      - SYMBOL=paxgusdt
+      - RISK_STOP_LOSS=2.0
+      - RISK_TAKE_PROFIT=4.0
+    networks:
+      - syslab-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4050/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
   # ==========================================
   # Redis Distributed Backplane (Scale-Out)

@@ -7,4 +7,5 @@ resources:
   - hpa.yaml
   - quant-deployment.yaml
   - quant-service.yaml
+  - go-engine-deployment.yaml
   - ingress.yaml
