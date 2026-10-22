@@ -101,7 +101,10 @@ class AutoBotManager {
         updatedAt: new Date().toISOString(),
         bots: this.bots
       };
-      fs.writeFileSync(this.ledgerFile, JSON.stringify(payload, null, 2));
+      // Institutional ACID Durability: Atomic write + rename prevents corrupt files on sudden crash
+      const tmpFile = `${this.ledgerFile}.${process.pid}.${Date.now()}.tmp`;
+      fs.writeFileSync(tmpFile, JSON.stringify(payload, null, 2), 'utf8');
+      fs.renameSync(tmpFile, this.ledgerFile);
     } catch (e) {
       console.warn('[LEDGER] Could not persist bot state:', e.message);
     }

@@ -24,6 +24,7 @@ class KronosPredictor {
     
     // Seeded projection hyperplane matrix for spherical quantization
     this.hyperplanes = this.initHyperplanes(this.dimension, 10);
+    this.cache = new Map(); // Sub-millisecond memoization cache for high-throughput concurrency
     this.checkPythonService();
   }
 
@@ -124,6 +125,14 @@ class KronosPredictor {
     const context = candles.slice(-Math.min(this.maxContext, candles.length));
     const lastCandle = context[context.length - 1];
     const currentPrice = lastCandle.close;
+
+    // Senior HFT Memoization Check (Sub-millisecond latency for high-frequency concurrency)
+    const cacheKey = `${options.symbol || 'ASSET'}_${lastCandle.timestamp || currentPrice}_${horizon}`;
+    const cached = this.cache.get(cacheKey);
+    const now = Date.now();
+    if (cached && (now - cached.cachedAt < 2000)) {
+      return cached.result;
+    }
 
     // Calculate rolling volume baseline
     let sumVol = 0;
@@ -255,7 +264,7 @@ class KronosPredictor {
       regime = 'HIGH_VOLATILITY_EXPANSION';
     }
 
-    return {
+    const forecastResult = {
       model: 'Kronos Foundation Model (AAAI 2026)',
       status: 'ONLINE',
       mode: this.isPythonServiceAvailable ? 'PYTORCH_GPU_INFERENCE' : 'NATIVE_BSQ_QUANTIZER',
@@ -273,6 +282,10 @@ class KronosPredictor {
       recommendedTP,
       timestamp: Date.now()
     };
+
+    if (this.cache.size > 100) this.cache.clear();
+    this.cache.set(cacheKey, { result: forecastResult, cachedAt: Date.now() });
+    return forecastResult;
   }
 
   generateFallbackForecast(candles, horizon) {
