@@ -167,4 +167,18 @@ d:\testing the project\quant-terminal\
 
 ---
 
+## 🔬 7. Milestone: Surfacing & Verifying AI Model Quantitative Performance
+
+### What Happened & Why It Was Hidden:
+1. **Timeframe Format Mismatch**: When the client sent `'15m'` to `/api/backtest`, the market generator multiplied `'15m' * 60 * 1000` which yielded `NaN` for all candle metrics (open, high, low, time). Because inputs were `NaN`, the Kronos predictor returned `NaN` expected return and `NaN` RankIC, preventing any buy/sell signal from triggering (`0 trades`).
+2. **Missing Closing Brace**: An unclosed brace in `public/js/app.js` around `pollGoEngine()` caused an unexpected token error, halting the client-side execution script before initializing the canvas and backtest.
+3. **Sidebar Tab Focus**: The default active tab on the sidebar was occasionally on `L2 Order Book`, hiding the `Strategy Lab` and `Institutional Tearsheet`.
+
+### How It Was Resolved:
+1. **Robust Timeframe Parsing**: Updated `marketGenerator.js` to parse string timeframes (`15m`, `1h`, `1D`) safely without returning `NaN`.
+2. **Script Integrity**: Repaired the bracket structure in `public/js/app.js`; verified via `node --check`.
+3. **Automated On-Load Backtest**: Terminal automatically runs the backtest on page load and selects `Strategy Equity vs Benchmark (Alpha)` in the sub-chart so the user immediately sees the glowing equity curve and tearsheet metrics upon entering.
+
+---
+
 *AlphaForge Quant Terminal — Co-Founded by CEO Lim Penghuot & Antigravity. Built from Zero to Hero.*

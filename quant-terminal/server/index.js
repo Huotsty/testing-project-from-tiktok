@@ -136,7 +136,7 @@ app.post('/api/backtest', (req, res) => {
       strategyResult = Strategies.bollingerReversion(candles, params);
     } else if (strategy === 'macdMomentum') {
       strategyResult = Strategies.macdMomentum(candles, params);
-    } else if (strategy === 'kronosFoundationAlpha') {
+    } else if (strategy === 'kronosFoundationAlpha' || strategy === 'kronosAlpha') {
       strategyResult = Strategies.kronosFoundationAlpha(candles, params);
     } else if (strategy === 'custom') {
       strategyResult = Strategies.customScript(candles, customCode);

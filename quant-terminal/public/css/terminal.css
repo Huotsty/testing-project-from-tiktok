@@ -252,6 +252,18 @@ body::after {
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
+.engine-pill.gpu {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.38);
+  color: #c084fc;
+}
+
+.engine-pill.gpu:hover {
+  background: rgba(168, 85, 247, 0.22);
+  border-color: #a855f7;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.45);
+}
+
 .pulse-led {
   width: 6px;
   height: 6px;

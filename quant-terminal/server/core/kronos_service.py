@@ -168,6 +168,9 @@ class KronosHandler(BaseHTTPRequestHandler):
                     "regime": "BULLISH_EXPANSION" if exp_return >= 0 else "BEARISH_LIQUIDATION"
                 }
 
+                vram_now = torch.cuda.memory_allocated(0)/(1024*1024) if CUDA_ACTIVE else 0.0
+                print(f"[RTX 3050 GPU INFERENCE {time.strftime('%H:%M:%S')}] Tensor Latency: {gpu_ms:.2f}ms | VRAM: {vram_now:.1f}MB | Return: {exp_return:+.2f}% ({response_payload['regime']}) | Conviction: {rank_ic:.2f}", flush=True)
+
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')

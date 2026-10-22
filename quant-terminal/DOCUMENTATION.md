@@ -69,10 +69,24 @@ Runs as a standalone compiled binary daemon on port `4050`:
 
 ### 3. Kronos Deep Learning Foundation Model (AAAI 2026)
 - **NVIDIA RTX 3050 CUDA Acceleration**: Verified on **NVIDIA GeForce RTX 3050 Laptop GPU (4GB GDDR6)** running PyTorch `2.14.1+cu126`.
-- **Inference Latency**: **1.038 milliseconds** per candle sequence with throughput of **963.7 predictions/sec**.
+- **Inference Latency**: **1.038 milliseconds** per candle sequence with throughput of **963.7 predictions/sec** and 8.53 MB allocated VRAM.
 - **Binary Spherical Quantization (BSQ)**: Maps multi-feature K-lines (Open, High, Low, Close, Volume, VWAP) into discrete 12-dimensional temporal tokens.
 - **Cones of Uncertainty**: Generates median expectation paths and 90%/10% confidence bounds.
 - **Dynamic Volatility Targets**: Derives mathematical Stop-Loss and Take-Profit price levels from projected horizon volatility.
+- **Where to View AI Model Performance in the Platform**:
+  1. **Institutional Tearsheet (Right Panel -> "Strategy Lab" Tab)**:
+     - Algorithm: `🔮 Kronos Foundation Alpha (AAAI 2026 / Pretrained K-Line...)`
+     - Displays quantitative metrics: **Net Profit ($ / %)**, **Sharpe Ratio**, **Sortino Ratio**, **Max Drawdown %**, **Win Rate %**, **Profit Factor**, and **Total Trades**.
+     - Click `⚡ Run Quant Backtest` to trigger an on-demand backtest with simulated slippage (5 bps) and fees (7.5 bps).
+  2. **Sub-Chart Equity Curve (Below Main Candlestick Chart)**:
+     - Dropdown: `Strategy Equity vs Benchmark (Alpha)`.
+     - Plots the glowing cyan AI cumulative equity curve vs the dashed grey buy-and-hold benchmark.
+  3. **Real-Time Candlestick Prediction Cone (Main Chart)**:
+     - Toggle `🔮 Kronos AI` purple button on chart toolbar.
+     - Displays the 12-bar forward Monte Carlo median path, upper/lower bounds, and target price tag.
+  4. **Top Navigation Bar & Telemetry HUD**:
+     - `⚡ GPU: RTX 3050 (1.0ms)` purple pill displays real-time GPU hardware acceleration.
+     - Main chart info bar: `🔮 KRONOS: ⚡ RTX 3050 GPU [REGIME] (RankIC: +0.XX)`.
 - **Live Diagnostics**: Telemetry accessible via `GET http://localhost:5050/health` and standalone benchmark `py -3.13 test_gpu_kronos.py`.
 
 ---

@@ -24,5 +24,173 @@
     },
     "paidAt": "2026-10-22T05:57:26.018Z",
     "paymentProof": "Bakong Mobile App QR Scan"
+  },
+  {
+    "invoiceId": "INV-MVJ8M1FV-DCED",
+    "planId": "quant_pro",
+    "planName": "AlphaForge Quant Pro Terminal",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "ABA_QR",
+    "amountUsd": 99,
+    "amountKhr": 405900,
+    "status": "PENDING",
+    "createdAt": "2026-10-22T07:46:25.100Z",
+    "expiresAt": "2026-10-22T08:16:25.100Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540599.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8M1FV-DCED6304285F",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654064059005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8M1FV-DCED6304C474",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540599.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ8M1FV-DCED6304285F",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    }
+  },
+  {
+    "invoiceId": "INV-MVJ8MBMU-6231",
+    "planId": "quant_pro",
+    "planName": "AlphaForge Quant Pro Terminal",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "ACLEDA_QR",
+    "amountUsd": 99,
+    "amountKhr": 405900,
+    "status": "PENDING",
+    "createdAt": "2026-10-22T07:46:38.311Z",
+    "expiresAt": "2026-10-22T08:16:38.311Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540599.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MBMU-6231630437CD",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654064059005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MBMU-62316304DBE6",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540599.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ8MBMU-6231630437CD",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    }
+  },
+  {
+    "invoiceId": "INV-MVJ8MEN0-B920",
+    "planId": "quant_pro",
+    "planName": "AlphaForge Quant Pro Terminal",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "DYNAMIC_KHQR",
+    "amountUsd": 99,
+    "amountKhr": 405900,
+    "status": "PENDING",
+    "createdAt": "2026-10-22T07:46:42.204Z",
+    "expiresAt": "2026-10-22T08:16:42.204Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540599.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MEN0-B9206304D5A4",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654064059005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MEN0-B9206304398F",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540599.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ8MEN0-B9206304D5A4",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    }
+  },
+  {
+    "invoiceId": "INV-MVJ8MFVX-F1CA",
+    "planId": "quant_pro",
+    "planName": "AlphaForge Quant Pro Terminal",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "USDT",
+    "amountUsd": 99,
+    "amountKhr": 405900,
+    "status": "PENDING",
+    "createdAt": "2026-10-22T07:46:43.821Z",
+    "expiresAt": "2026-10-22T08:16:43.821Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540599.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MFVX-F1CA63040DFF",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654064059005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MFVX-F1CA6304E1D4",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540599.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ8MFVX-F1CA63040DFF",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    }
+  },
+  {
+    "invoiceId": "INV-MVJ8MJFT-27A7",
+    "planId": "quant_pro",
+    "planName": "AlphaForge Quant Pro Terminal",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "DYNAMIC_KHQR",
+    "amountUsd": 99,
+    "amountKhr": 405900,
+    "status": "PENDING",
+    "createdAt": "2026-10-22T07:46:48.425Z",
+    "expiresAt": "2026-10-22T08:16:48.425Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540599.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MJFT-27A76304ECC7",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654064059005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MJFT-27A7630400EC",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540599.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ8MJFT-27A76304ECC7",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    }
+  },
+  {
+    "invoiceId": "INV-MVJ8MKYL-0E08",
+    "planId": "starter_signal",
+    "planName": "Alpha Signals (Telegram VIP)",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "DYNAMIC_KHQR",
+    "amountUsd": 29,
+    "amountKhr": 118900,
+    "status": "PENDING",
+    "createdAt": "2026-10-22T07:46:50.397Z",
+    "expiresAt": "2026-10-22T08:16:50.397Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540529.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MKYL-0E0863041A32",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654061189005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MKYL-0E0863042664",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540529.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ8MKYL-0E0863041A32",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    }
+  },
+  {
+    "invoiceId": "INV-MVJ8MLTE-107E",
+    "planId": "starter_signal",
+    "planName": "Alpha Signals (Telegram VIP)",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "ACLEDA_QR",
+    "amountUsd": 29,
+    "amountKhr": 118900,
+    "status": "PENDING",
+    "createdAt": "2026-10-22T07:46:51.506Z",
+    "expiresAt": "2026-10-22T08:16:51.506Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540529.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MLTE-107E6304525F",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654061189005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ8MLTE-107E63046E09",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540529.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ8MLTE-107E6304525F",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    }
   }
 ]

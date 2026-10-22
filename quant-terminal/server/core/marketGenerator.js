@@ -75,6 +75,20 @@ class MarketGenerator {
    * timeframeMinutes: candle duration in minutes (e.g. 1, 5, 15, 60, 1440)
    */
   generateHistory(symbol = 'BTC-USD', count = 200, timeframeMinutes = 15) {
+    let tf = 15;
+    if (typeof timeframeMinutes === 'string') {
+      if (timeframeMinutes.endsWith('h') || timeframeMinutes.endsWith('H')) {
+        tf = (parseInt(timeframeMinutes) || 1) * 60;
+      } else if (timeframeMinutes.endsWith('d') || timeframeMinutes.endsWith('D')) {
+        tf = (parseInt(timeframeMinutes) || 1) * 1440;
+      } else {
+        tf = parseInt(timeframeMinutes) || 15;
+      }
+    } else if (typeof timeframeMinutes === 'number' && !isNaN(timeframeMinutes) && timeframeMinutes > 0) {
+      tf = timeframeMinutes;
+    }
+    timeframeMinutes = tf;
+
     const config = this.assets[symbol] || this.assets['BTC-USD'];
     const candles = [];
     const now = Date.now();
