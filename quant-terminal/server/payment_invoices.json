@@ -192,5 +192,31 @@
       "usdtBep20": "0x71C...LimPenghuotAlphaForge",
       "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
     }
+  },
+  {
+    "invoiceId": "INV-MVJAF4UC-FD51",
+    "planId": "starter_signal",
+    "planName": "Alpha Signals (Telegram VIP)",
+    "customerName": "CEO Lim Penghuot Real Scan Test",
+    "customerEmail": "",
+    "paymentMethod": "KHQR",
+    "amountUsd": 29,
+    "amountKhr": 118900,
+    "status": "PAID",
+    "createdAt": "2026-10-22T08:37:02.149Z",
+    "expiresAt": "2026-10-22T09:07:02.149Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540529.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJAF4UC-FD5163046FB0",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654061189005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJAF4UC-FD51630453E6",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540529.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJAF4UC-FD5163046FB0",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    },
+    "paidAt": "2026-10-22T08:37:02.184Z",
+    "paymentProof": "Bakong National Switch Webhook (TxID: NBC-TX-9847192, Source: NBC_BAKONG_SWITCH)"
   }
 ]

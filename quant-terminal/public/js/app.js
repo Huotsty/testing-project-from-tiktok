@@ -1496,6 +1496,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let activePlanId = 'quant_pro';
   let currentInvoice = null;
+  let invoicePollTimer = null;
+
+  function stopInvoicePolling() {
+    if (invoicePollTimer) {
+      clearInterval(invoicePollTimer);
+      invoicePollTimer = null;
+    }
+  }
+
+  function startInvoicePolling(invoiceId) {
+    stopInvoicePolling();
+    invoicePollTimer = setInterval(async () => {
+      if (!currentInvoice || currentInvoice.invoiceId !== invoiceId || currentInvoice.status === 'PAID') {
+        stopInvoicePolling();
+        return;
+      }
+      try {
+        const res = await fetch(`/api/payments/invoice/${invoiceId}`);
+        const data = await res.json();
+        if (data.success && data.invoice && data.invoice.status === 'PAID') {
+          stopInvoicePolling();
+          currentInvoice.status = 'PAID';
+          if (invoiceStatusPill) {
+            invoiceStatusPill.innerText = '🟢 SCAN VERIFIED (AUTO-DETECTED)!';
+            invoiceStatusPill.style.background = 'rgba(16, 185, 129, 0.2)';
+            invoiceStatusPill.style.color = '#10b981';
+            invoiceStatusPill.style.borderColor = '#10b981';
+          }
+          if (qrScanInstructions) {
+            qrScanInstructions.innerHTML = '🎉 <b style="color:#10b981;">Payment confirmed!</b> Bank scan detected automatically. Alert dispatched to @penghuotbot.';
+          }
+          if (btnSimulatePaymentConfirm) {
+            btnSimulatePaymentConfirm.innerText = '✅ Payment Verified & Dispatched';
+            btnSimulatePaymentConfirm.disabled = true;
+          }
+        }
+      } catch (e) {}
+    }, 2000);
+  }
 
   function updateBankTabStyles(activeTab) {
     const tabs = [
@@ -1536,9 +1575,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (data.success && data.invoice) {
         currentInvoice = data.invoice;
+        startInvoicePolling(currentInvoice.invoiceId);
         if (invoiceRefDisplay) invoiceRefDisplay.innerText = currentInvoice.invoiceId;
         if (invoiceStatusPill) {
-          invoiceStatusPill.innerText = '🟡 AWAITING SCAN';
+          invoiceStatusPill.innerText = '🟡 AWAITING SCAN (Auto-polling bank...)';
           invoiceStatusPill.style.background = 'rgba(234, 179, 8, 0.15)';
           invoiceStatusPill.style.color = '#facc15';
           invoiceStatusPill.style.borderColor = 'rgba(234, 179, 8, 0.3)';
@@ -1632,6 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnClosePaymentModal && paymentModal) {
     btnClosePaymentModal.addEventListener('click', () => {
+      stopInvoicePolling();
       paymentModal.style.display = 'none';
     });
   }

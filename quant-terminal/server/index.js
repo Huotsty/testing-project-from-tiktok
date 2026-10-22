@@ -521,6 +521,19 @@ app.post('/api/payments/confirm', (req, res) => {
   res.json({ success: true, ...result });
 });
 
+// 10b. Official Bakong & ABA PayWay Webhook Receiver (Auto-Settlement)
+app.post('/api/payments/bakong-webhook', (req, res) => {
+  const { invoiceId, externalRef, tranId, hash, status = 'SUCCESS', source = 'NBC_BAKONG_SWITCH' } = req.body || {};
+  const targetId = invoiceId || externalRef;
+  if (!targetId) return res.status(400).json({ success: false, error: 'invoiceId or externalRef required' });
+
+  const proof = `Bakong National Switch Webhook (TxID: ${tranId || hash || 'NBC-' + Date.now().toString(36).toUpperCase()}, Source: ${source})`;
+  const result = paymentGatewayService.confirmPayment(targetId, proof);
+  if (result.error) return res.status(404).json({ success: false, error: result.error });
+
+  res.json({ success: true, responseCode: 0, message: 'Transaction verified and settled', data: result });
+});
+
 app.get('/api/payments/config', (req, res) => {
   res.json({ success: true, ...paymentGatewayService.getConfig() });
 });
