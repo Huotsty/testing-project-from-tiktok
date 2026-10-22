@@ -18,6 +18,7 @@ const liveFeedService = require('./core/liveFeedService');
 const newsService = require('./services/newsService');
 const realTradingService = require('./services/realTradingService');
 const AutoBotManager = require('./services/autoBotManager');
+const kronosPredictor = require('./core/kronosPredictor');
 
 const autoBotManager = new AutoBotManager(telegramService);
 
@@ -455,6 +456,21 @@ app.post('/api/auto-bot/simulate-trade', async (req, res) => {
   }
 });
 
+// --- 9. Kronos Foundation Model (AAAI 2026) Forecaster Endpoints ---
+app.get('/api/forecast/kronos', (req, res) => {
+  const { symbol = 'BTC-USD', horizon = 12 } = req.query;
+  const candles = candleCache[symbol] || marketGen.generateHistory(symbol, 60, 15);
+  const forecast = kronosPredictor.predict(candles, { symbol, horizon: parseInt(horizon, 10) || 12 });
+  res.json({ success: true, forecast });
+});
+
+app.post('/api/forecast/kronos', (req, res) => {
+  const { symbol = 'BTC-USD', horizon = 12, candles } = req.body || {};
+  const dataCandles = (candles && candles.length > 0) ? candles : (candleCache[symbol] || marketGen.generateHistory(symbol, 60, 15));
+  const forecast = kronosPredictor.predict(dataCandles, { symbol, horizon: parseInt(horizon, 10) || 12 });
+  res.json({ success: true, forecast });
+});
+
 // Stream real-world ticks directly into terminal
 liveFeedService.onTick((tick) => {
   if (feedMode !== 'LIVE_REAL') return;
@@ -536,6 +552,11 @@ wss.on('connection', (ws) => {
       } else if (data.type === 'STOP_BOT') {
         ws.botState.active = false;
         ws.send(JSON.stringify({ type: 'BOT_STATUS', status: 'STOPPED', botState: ws.botState }));
+      } else if (data.type === 'GET_KRONOS_FORECAST') {
+        const sym = data.symbol || ws.currentSymbol || 'BTC-USD';
+        const candles = candleCache[sym] || marketGen.generateHistory(sym, 60, 15);
+        const forecast = kronosPredictor.predict(candles, { symbol: sym, horizon: data.horizon || 12 });
+        ws.send(JSON.stringify({ type: 'KRONOS_FORECAST', data: forecast }));
       }
     } catch (e) {
       console.error('WS Parse Error:', e);

@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastCandle = data.candles[data.candles.length - 1];
         updateLivePrice(lastCandle.close);
       }
+      fetchKronosForecast();
     } catch (e) {
       console.error('Error loading market data:', e);
     }
@@ -134,6 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
           logAiDecision(data);
         } else if (data.type === 'AUTO_BOT_EVENT') {
           fetchAutoBotStatus();
+        } else if (data.type === 'KRONOS_FORECAST') {
+          chart.setKronosForecast(data.data);
+          updateKronosHud(data.data);
         }
       } catch (err) {
         console.error('WS Message parsing error:', err);
@@ -204,6 +208,27 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `;
+    } else if (strat === 'kronosFoundationAlpha') {
+      customEditorContainer.style.display = 'none';
+      strategyParamsContainer.innerHTML = `
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Forecast Horizon (Bars)</label>
+            <input type="number" id="paramKronosHorizon" class="form-input" value="12" min="6" max="36">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min Expected Return (%)</label>
+            <input type="number" id="paramKronosMinReturn" class="form-input" value="0.5" step="0.1" min="0.1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min RankIC Conviction</label>
+          <input type="number" id="paramKronosRankIC" class="form-input" value="0.30" step="0.05" min="0.1" max="0.9">
+        </div>
+        <div style="font-size:0.7rem; color:#c084fc; padding:4px 8px; background:rgba(168,85,247,0.1); border-radius:4px; border:1px solid rgba(168,85,247,0.25);">
+          🔮 Uses AAAI 2026 Binary Spherical Quantization (BSQ) K-Line tokenization + Autoregressive Attention path generation.
+        </div>
+      `;
     } else if (strat === 'custom') {
       strategyParamsContainer.innerHTML = '';
       customEditorContainer.style.display = 'block';
@@ -235,6 +260,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (strat === 'macdMomentum') {
         params.fast = document.getElementById('paramMacdFast').value;
         params.slow = document.getElementById('paramMacdSlow').value;
+      } else if (strat === 'kronosFoundationAlpha') {
+        params.horizon = document.getElementById('paramKronosHorizon').value;
+        params.minExpectedReturn = document.getElementById('paramKronosMinReturn').value;
+        params.minRankIC = document.getElementById('paramKronosRankIC').value;
       }
 
       const body = {
@@ -595,6 +624,37 @@ document.addEventListener('DOMContentLoaded', () => {
     this.classList.toggle('active', chart.showVolume);
     chart.render();
   });
+
+  const toggleKronosBtn = document.getElementById('toggleKronos');
+  if (toggleKronosBtn) {
+    toggleKronosBtn.addEventListener('click', function() {
+      const active = chart.toggleKronos();
+      this.classList.toggle('active', active);
+      if (active) fetchKronosForecast();
+    });
+  }
+
+  async function fetchKronosForecast() {
+    try {
+      const res = await fetch(`/api/forecast/kronos?symbol=${currentSymbol}&horizon=12`);
+      const data = await res.json();
+      if (data.success && data.forecast) {
+        chart.setKronosForecast(data.forecast);
+        updateKronosHud(data.forecast);
+      }
+    } catch (e) {
+      console.warn('Could not fetch Kronos forecast:', e);
+    }
+  }
+
+  function updateKronosHud(f) {
+    const el = document.getElementById('hudKronosVal');
+    if (!el || !f) return;
+    const sign = f.expectedReturnPct >= 0 ? '+' : '';
+    const color = f.expectedReturnPct >= 0 ? '#00f59b' : '#ff3366';
+    el.innerHTML = `<span style="color:${color}">${sign}${f.expectedReturnPct}%</span> [${f.regime}] (RankIC: +${f.rankIC})`;
+  }
+
   // Live Real Feed Mode Toggle
   let currentFeedMode = 'LIVE_REAL';
   const btnToggleFeedMode = document.getElementById('btnToggleFeedMode');

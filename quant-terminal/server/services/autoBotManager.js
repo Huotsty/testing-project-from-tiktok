@@ -291,6 +291,21 @@ class AutoBotManager {
         signal = 'SELL';
         reason = `Rejected Upper Bollinger Band (${bb.upper[i].toFixed(2)})`;
       }
+    } else if (bot.strategy === 'kronosAlpha') {
+      const KronosPredictor = require('../core/kronosPredictor');
+      const forecast = KronosPredictor.predict(candles, { horizon: bot.params.horizon || 12 });
+      if (forecast.regime === 'BULLISH_EXPANSION' && forecast.expectedReturnPct >= (bot.params.minReturn || 0.45) && forecast.rankIC >= 0.25) {
+        signal = 'BUY';
+        reason = `🔮 KRONOS_AI: Bullish Trajectory (+${forecast.expectedReturnPct}% / ${forecast.horizon}b, RankIC: +${forecast.rankIC})`;
+        // Volatility-calibrated risk targets
+        if (forecast.recommendedTP && forecast.recommendedSL && currentPrice > 0) {
+          bot.stopLossPct = Number(Math.min(3.5, Math.max(1.0, ((currentPrice - forecast.recommendedSL) / currentPrice) * 100)).toFixed(1));
+          bot.takeProfitPct = Number(Math.min(8.0, Math.max(2.5, ((forecast.recommendedTP - currentPrice) / currentPrice) * 100)).toFixed(1));
+        }
+      } else if (forecast.regime === 'BEARISH_BREAKDOWN' && forecast.expectedReturnPct <= -0.40) {
+        signal = 'SELL';
+        reason = `🔮 KRONOS_AI: Bearish Breakdown Trajectory (${forecast.expectedReturnPct}%)`;
+      }
     }
 
     // 6. AI Regime Filter Guard on BUY signals

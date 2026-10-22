@@ -152,6 +152,7 @@
             <button id="toggleBB" class="chip-toggle bb" title="Bollinger Bands (20, 2σ)">Bollinger</button>
             <button id="toggleVWAP" class="chip-toggle active" title="Volume Weighted Average Price">VWAP</button>
             <button id="toggleVol" class="chip-toggle active" title="Volume Bars">Volume</button>
+            <button id="toggleKronos" class="chip-toggle active" style="background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.6); color: #c084fc; font-weight: 700;" title="Kronos Neural Foundation Candlestick Forecaster (AAAI 2026)">🔮 Kronos AI</button>
           </div>
         </div>
 
@@ -172,6 +173,7 @@
             <span class="hud-item">C: <span id="hudClose">--</span></span>
             <span class="hud-item">Vol: <span id="hudVolume">--</span></span>
             <span class="hud-item">RSI(14): <span id="hudRsi" style="color:#c77dff;">--</span></span>
+            <span class="hud-item" id="hudKronosBadge" style="display:inline-flex; align-items:center; gap:4px; background:rgba(168,85,247,0.18); border:1px solid rgba(168,85,247,0.4); padding:1px 8px; border-radius:4px; color:#c084fc; font-size:9.5px; font-weight:700;">🔮 KRONOS: <span id="hudKronosVal">INITIALIZING...</span></span>
           </div>
         </div>
 
@@ -227,6 +229,7 @@
         <div class="form-group">
           <label class="form-label">Algorithm Architecture</label>
           <select id="strategySelect" class="form-select">
+            <option value="kronosFoundationAlpha">🔮 Kronos Foundation Alpha (AAAI 2026 / Pretrained K-Line LLM)</option>
             <option value="smaCrossover">Dual Moving Average Crossover (Trend Following)</option>
             <option value="rsiMeanReversion">RSI Mean Reversion (Statistical Oscillator)</option>
             <option value="bollingerReversion">Bollinger Bands Mean Reversion</option>

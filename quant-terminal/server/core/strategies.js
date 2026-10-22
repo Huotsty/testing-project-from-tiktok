@@ -249,6 +249,54 @@ class Strategies {
       indicatorData: { rsi: rsi14, sma20, ema50, bb }
     };
   }
+
+  /**
+   * 6. Kronos Foundation Model Alpha (AAAI 2026)
+   * Autoregressive K-Line Tokenizer + Monte Carlo Directional Probability Cones
+   * Enters long on Bullish Expansion regime with high RankIC conviction
+   */
+  static kronosFoundationAlpha(candles, params = {}) {
+    const KronosPredictor = require('./kronosPredictor');
+    const minExpectedReturn = Number(params.minExpectedReturn) || 0.50; // +0.5%
+    const minRankIC = Number(params.minRankIC) || 0.30;
+    const horizon = Number(params.horizon) || 12;
+
+    const signals = [];
+    const forecastHistories = [];
+
+    for (let i = 0; i < candles.length; i++) {
+      if (i < 20) {
+        signals.push({ action: 'HOLD', reason: 'Warming up Kronos context' });
+        continue;
+      }
+
+      // Slice historical window up to current candle
+      const windowCandles = candles.slice(Math.max(0, i - 100), i + 1);
+      const forecast = KronosPredictor.predict(windowCandles, { horizon });
+      forecastHistories.push(forecast);
+
+      if (forecast.regime === 'BULLISH_EXPANSION' && forecast.expectedReturnPct >= minExpectedReturn && forecast.rankIC >= minRankIC) {
+        signals.push({
+          action: 'BUY',
+          reason: `🔮 KRONOS_AI: Bullish Expansion (+${forecast.expectedReturnPct}% / ${horizon}b, RankIC: +${forecast.rankIC})`
+        });
+      } else if (forecast.regime === 'BEARISH_BREAKDOWN' && forecast.expectedReturnPct <= -0.40) {
+        signals.push({
+          action: 'SELL',
+          reason: `🔮 KRONOS_AI: Bearish Breakdown (${forecast.expectedReturnPct}% / ${horizon}b)`
+        });
+      } else {
+        signals.push({ action: 'HOLD' });
+      }
+    }
+
+    return {
+      name: `Kronos Foundation Alpha (AAAI 2026, Horizon: ${horizon})`,
+      signals,
+      indicatorData: { forecastHistories }
+    };
+  }
 }
 
 module.exports = Strategies;
+

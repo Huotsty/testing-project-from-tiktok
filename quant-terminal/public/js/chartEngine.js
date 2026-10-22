@@ -29,6 +29,8 @@ class ChartEngine {
     this.showBB = false;
     this.showVWAP = true;
     this.showVolume = true;
+    this.showKronos = true;
+    this.kronosForecast = null;
 
     // Viewport & Pan/Zoom
     this.candleWidth = 8;
@@ -234,6 +236,11 @@ class ChartEngine {
       this.drawActiveBracketLines(ctx, plotW, getY);
     }
 
+    // Draw Kronos Neural Forecast Cone Overlay (AAAI 2026)
+    if (this.showKronos && this.kronosForecast) {
+      this.drawKronosForecastCone(ctx, plotW, plotH, minPrice, maxPrice, visibleCandles, getY, getX);
+    }
+
     // Draw Live Laser Price Line
     const lastCandle = visibleCandles[visibleCandles.length - 1];
     if (lastCandle) {
@@ -274,6 +281,149 @@ class ChartEngine {
         this.updateHud(candle, globalIdx);
       }
     }
+  }
+
+  setKronosForecast(forecast) {
+    this.kronosForecast = forecast;
+    this.render();
+  }
+
+  toggleKronos() {
+    this.showKronos = !this.showKronos;
+    this.render();
+    return this.showKronos;
+  }
+
+  drawKronosForecastCone(ctx, plotW, plotH, minPrice, maxPrice, visibleCandles, getY, getX) {
+    const f = this.kronosForecast;
+    if (!f || !f.medianPath || f.medianPath.length === 0 || visibleCandles.length === 0) return;
+
+    const lastIdx = visibleCandles.length - 1;
+    const lastX = getX(lastIdx);
+    const lastPrice = visibleCandles[lastIdx].close;
+    const totalCandleSpace = this.candleWidth + this.candleGap;
+    const horizon = Math.min(f.medianPath.length, 14);
+
+    ctx.save();
+
+    // 1. Draw Confidence Cone Polygon Ribbon (10th to 90th percentile)
+    const upperPoints = [];
+    const lowerPoints = [];
+
+    for (let h = 0; h < horizon; h++) {
+      const x = Math.min(plotW + 30, lastX + (h + 1) * totalCandleSpace);
+      const uY = getY(f.upperCone90[h] || lastPrice);
+      const lY = getY(f.lowerCone10[h] || lastPrice);
+      upperPoints.push({ x, y: uY });
+      lowerPoints.push({ x, y: lY });
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(lastX, getY(lastPrice));
+    for (const p of upperPoints) ctx.lineTo(p.x, p.y);
+    for (let i = lowerPoints.length - 1; i >= 0; i--) ctx.lineTo(lowerPoints[i].x, lowerPoints[i].y);
+    ctx.closePath();
+
+    const isBull = (f.expectedReturnPct || 0) >= 0;
+    const endX = upperPoints[upperPoints.length - 1] ? upperPoints[upperPoints.length - 1].x : lastX + 100;
+    const coneGrad = ctx.createLinearGradient(lastX, 0, endX, 0);
+    if (isBull) {
+      coneGrad.addColorStop(0, 'rgba(0, 240, 255, 0.22)');
+      coneGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.16)');
+      coneGrad.addColorStop(1, 'rgba(0, 245, 155, 0.04)');
+    } else {
+      coneGrad.addColorStop(0, 'rgba(255, 51, 102, 0.22)');
+      coneGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.16)');
+      coneGrad.addColorStop(1, 'rgba(255, 51, 102, 0.04)');
+    }
+    ctx.fillStyle = coneGrad;
+    ctx.fill();
+
+    // 2. Upper and Lower Boundary Strokes
+    ctx.strokeStyle = isBull ? 'rgba(0, 240, 255, 0.45)' : 'rgba(255, 51, 102, 0.45)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    
+    // Upper line
+    ctx.beginPath();
+    ctx.moveTo(lastX, getY(lastPrice));
+    for (const p of upperPoints) ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+
+    // Lower line
+    ctx.beginPath();
+    ctx.moveTo(lastX, getY(lastPrice));
+    for (const p of lowerPoints) ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+
+    // 3. Draw Median Expected Path Line (Glowing light violet)
+    ctx.strokeStyle = '#c084fc';
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([5, 4]);
+    ctx.shadowColor = '#a855f7';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(lastX, getY(lastPrice));
+    for (let h = 0; h < horizon; h++) {
+      const x = Math.min(plotW + 30, lastX + (h + 1) * totalCandleSpace);
+      ctx.lineTo(x, getY(f.medianPath[h]));
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 4. Draw Synthetic Forecast Candlesticks (Phantom Candles)
+    if (f.forecastCandles && f.forecastCandles.length > 0) {
+      for (let h = 0; h < Math.min(horizon, f.forecastCandles.length); h++) {
+        const fc = f.forecastCandles[h];
+        const cx = lastX + (h + 1) * totalCandleSpace;
+        if (cx > plotW) break;
+
+        const candleBull = fc.close >= fc.open;
+        const color = candleBull ? 'rgba(0, 245, 155, 0.8)' : 'rgba(255, 51, 102, 0.8)';
+
+        // Phantom Wick
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(cx, getY(fc.high));
+        ctx.lineTo(cx, getY(fc.low));
+        ctx.stroke();
+
+        // Phantom Body
+        const topY = getY(Math.max(fc.open, fc.close));
+        const botY = getY(Math.min(fc.open, fc.close));
+        const bH = Math.max(2, botY - topY);
+
+        ctx.strokeStyle = color;
+        ctx.strokeRect(cx - (this.candleWidth / 2), topY, this.candleWidth, bH);
+        ctx.fillStyle = candleBull ? 'rgba(0, 245, 155, 0.15)' : 'rgba(255, 51, 102, 0.15)';
+        ctx.fillRect(cx - (this.candleWidth / 2), topY, this.candleWidth, bH);
+      }
+    }
+
+    // 5. Draw Glowing Forecast Tag at Tip
+    const tipX = Math.min(plotW - 135, lastX + horizon * totalCandleSpace);
+    const tipY = Math.max(22, Math.min(plotH - 25, getY(f.medianPath[horizon - 1])));
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+    ctx.strokeStyle = isBull ? '#00f59b' : '#ff3366';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(tipX - 10, tipY - 12, 140, 24, 4);
+    } else {
+      ctx.rect(tipX - 10, tipY - 12, 140, 24);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+    const sign = f.expectedReturnPct >= 0 ? '+' : '';
+    ctx.fillText(`🔮 KRONOS: ${sign}${f.expectedReturnPct}%`, tipX - 3, tipY + 3);
+
+    ctx.restore();
   }
 
   drawActiveBracketLines(ctx, plotW, getY) {
