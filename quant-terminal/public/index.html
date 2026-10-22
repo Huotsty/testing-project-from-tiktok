@@ -29,6 +29,9 @@
         <h1 class="brand-title">AlphaForge <span style="font-weight:400; color:#00f0ff;">QUANT</span></h1>
       </div>
       <span class="brand-tag">Ultra HFT</span>
+      <a href="/docs.html" target="_blank" class="btn-secondary btn-docs-nav" style="font-size:0.7rem; padding:3px 8px;" title="Open AlphaForge Whitepaper & Institutional Documentation">
+        📖 Docs
+      </a>
       <span class="founder-badge" title="Proprietary quantitative architecture developed by Lim Penghuot (CEO) & Antigravity (DeepMind CTO)">
         Founders: <b>Lim & Antigravity</b>
       </span>
@@ -126,12 +129,12 @@
         Theory
       </button>
 
-      <a href="/docs.html" target="_blank" class="btn-secondary" style="border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; text-decoration: none;" title="Open AlphaForge Whitepaper & Institutional Documentation">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+      <a href="/docs.html" target="_blank" class="btn-secondary btn-docs-nav" id="navDocsBtn" title="AlphaForge Institutional Whitepaper & Documentation">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
         </svg>
-        Docs
+        📖 Docs
       </a>
     </div>
   </header>
@@ -173,6 +176,9 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:8px;">
+          <a href="/docs.html" target="_blank" class="btn-secondary btn-docs-nav" style="font-size:0.7rem; padding:3px 10px;" title="Open AlphaForge Institutional Whitepaper & Documentation">
+            📖 Docs & Architecture
+          </a>
           <button id="btnToggleFeedMode" class="btn-secondary" style="font-size:0.7rem; padding:3px 9px; color:#00f59b; border-color:rgba(0,245,155,0.4); font-weight:700;" title="Switch between Real Live Exchange data and Stochastic simulation">
             🔴 LIVE REAL FEED (Binance / Gold)
           </button>
@@ -962,6 +968,13 @@ return 'HOLD';</textarea>
       </div>
     </div>
   </div>
+
+  <!-- Persistent Floating Quick Action: Docs & Whitepaper -->
+  <a href="/docs.html" target="_blank" id="floatingDocsBtn" class="floating-docs-pill" title="Open Institutional Whitepaper & Platform Documentation">
+    <span>📖</span>
+    <span>Docs & Whitepaper</span>
+    <span class="floating-docs-badge">v2.4</span>
+  </a>
 
   <!-- Scripts -->
   <script src="js/chartEngine.js"></script>

@@ -134,6 +134,12 @@ body::after {
   justify-content: space-between;
   padding: 0 12px;
   gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.terminal-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-brand {
@@ -1181,8 +1187,108 @@ canvas#subChart {
 }
 
 /* ==========================================================================
+   DOCS NAVIGATION & FLOATING QUICK ACCESS
+   ========================================================================== */
+.btn-docs-nav {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-docs-nav:hover {
+  background: rgba(56, 189, 248, 0.25) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.45);
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+
+.floating-docs-pill {
+  position: fixed;
+  bottom: 24px;
+  right: 28px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 15, 29, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  backdrop-filter: blur(14px);
+  padding: 8px 18px;
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.3);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.floating-docs-pill:hover {
+  transform: translateY(-3px) scale(1.04);
+  border-color: #38bdf8;
+  background: rgba(14, 22, 42, 0.98);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 28px rgba(56, 189, 248, 0.6);
+  color: #38bdf8;
+}
+
+.floating-docs-pill .floating-docs-badge {
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
    MOBILE & RESPONSIVE BREAKPOINTS
    ========================================================================== */
+@media (max-width: 1560px) {
+  .founder-badge {
+    display: none !important;
+  }
+  .telemetry-cluster {
+    gap: 4px;
+  }
+  .engine-pill {
+    padding: 2px 6px;
+    font-size: 9.5px;
+  }
+  .nav-actions {
+    gap: 4px;
+  }
+  .btn-secondary, .btn-primary {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 1360px) {
+  .brand-tag {
+    display: none !important;
+  }
+  #spreadArmorBadge {
+    display: none !important;
+  }
+  .nav-ticker-bar .ws-status {
+    display: none !important;
+  }
+  .asset-select {
+    max-width: 110px;
+    font-size: 0.74rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .dashboard-container {
     grid-template-columns: 1fr;

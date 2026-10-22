@@ -25,6 +25,10 @@
       --font-mono: 'JetBrains Mono', monospace;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background-color: var(--bg-primary);
@@ -39,9 +43,9 @@
 
     /* Top Navigation Header */
     header {
-      height: 60px;
-      background: rgba(13, 17, 26, 0.85);
-      backdrop-filter: blur(12px);
+      height: 64px;
+      background: rgba(13, 17, 26, 0.92);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -92,7 +96,7 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .nav-link {
@@ -104,20 +108,25 @@
     }
 
     .nav-link:hover { color: #fff; }
+
     .nav-btn-terminal {
       background: #10b981;
-      color: #000;
-      padding: 6px 14px;
+      color: #000 !important;
+      padding: 7px 16px;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 800;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: opacity 0.2s;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+      transition: all 0.2s;
     }
-    .nav-btn-terminal:hover { opacity: 0.9; }
+    .nav-btn-terminal:hover { 
+      background: #34d399;
+      transform: translateY(-1px);
+    }
 
     /* Layout: Sidebar + Content */
     .docs-container {
@@ -129,20 +138,21 @@
     }
 
     aside {
-      width: 280px;
-      padding: 32px 20px;
+      width: 290px;
+      padding: 28px 20px;
       border-right: 1px solid var(--border);
       position: sticky;
-      top: 60px;
-      height: calc(100vh - 60px);
+      top: 64px;
+      height: calc(100vh - 64px);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 22px;
+      background: rgba(7, 9, 14, 0.85);
     }
 
     .nav-group-title {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -170,15 +180,20 @@
     .nav-group-links a:hover,
     .nav-group-links a.active {
       color: #fff;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.05);
       border-left: 2px solid var(--gold);
     }
 
     /* Main Content Area */
     main {
       flex: 1;
-      padding: 48px 64px 96px;
+      padding: 40px 64px 96px;
       max-width: 980px;
+    }
+
+    section {
+      scroll-margin-top: 80px;
+      margin-bottom: 48px;
     }
 
     h1 {
@@ -190,23 +205,24 @@
     }
 
     .lead {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: #94a3b8;
       line-height: 1.6;
-      margin-bottom: 36px;
+      margin-bottom: 32px;
     }
 
     h2 {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: #fff;
-      margin-top: 48px;
+      margin-top: 36px;
       margin-bottom: 16px;
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       gap: 8px;
+      scroll-margin-top: 80px;
     }
 
     h3 {
@@ -215,17 +231,18 @@
       color: var(--gold);
       margin-top: 24px;
       margin-bottom: 10px;
+      scroll-margin-top: 80px;
     }
 
     p {
       color: #cbd5e1;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       font-size: 0.92rem;
     }
 
     ul, ol {
       margin-left: 20px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       color: #cbd5e1;
       font-size: 0.92rem;
     }
@@ -243,6 +260,7 @@
       font-size: 0.82rem;
       color: #38bdf8;
       margin-bottom: 20px;
+      line-height: 1.5;
     }
 
     code {
@@ -331,6 +349,71 @@
       color: var(--text-muted);
       background: var(--bg-secondary);
     }
+
+    /* Target Section Flash Animation */
+    section.section-highlight {
+      outline: 2px solid var(--gold);
+      border-radius: 8px;
+      box-shadow: 0 0 24px rgba(250, 204, 21, 0.35);
+      animation: pulseHighlight 1.5s ease-out;
+    }
+
+    @keyframes pulseHighlight {
+      0% { background: rgba(250, 204, 21, 0.12); }
+      100% { background: transparent; }
+    }
+
+    /* Code Copy Button */
+    .code-wrap {
+      position: relative;
+    }
+    .copy-code-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+      z-index: 5;
+    }
+    .copy-code-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border-color: var(--cyan);
+    }
+
+    /* Floating Back to Chart Button */
+    .floating-back-chart {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border: 1px solid #34d399;
+      color: #040812 !important;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 10px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(16, 185, 129, 0.35);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+    }
+    .floating-back-chart:hover {
+      background: #34d399;
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 28px rgba(16, 185, 129, 0.6);
+    }
   </style>
 </head>
 <body>
@@ -343,23 +426,24 @@
       <span class="brand-tag">v2.4 INSTITUTIONAL DOCS</span>
     </a>
     <nav class="nav-links">
-      <a href="#architecture" class="nav-link">Architecture</a>
-      <a href="#engines" class="nav-link">HFT Engines</a>
-      <a href="#kronos" class="nav-link">Kronos AI</a>
-      <a href="#khqr" class="nav-link">Bakong KHQR</a>
-      <a href="#security" class="nav-link">Security</a>
-      <a href="/" class="nav-btn-terminal">⚡ Launch Terminal</a>
+      <a href="#system-architecture" class="nav-link">Architecture</a>
+      <a href="#cpp-engine" class="nav-link">C++20 SIMD</a>
+      <a href="#go-engine" class="nav-link">Go Engine</a>
+      <a href="#kronos-foundation" class="nav-link">Kronos AI</a>
+      <a href="#khqr-gateway" class="nav-link">Bakong KHQR</a>
+      <a href="#risk-armor" class="nav-link">Risk Armor</a>
+      <a href="/" class="nav-btn-terminal">📊 Back to Trading Chart</a>
     </nav>
   </header>
 
   <div class="docs-container">
     
-    <!-- Sidebar Navigation -->
-    <aside>
+    <!-- Sidebar Navigation: All links matched to body IDs -->
+    <aside id="docsSidebar">
       <div>
         <div class="nav-group-title">Getting Started</div>
         <ul class="nav-group-links">
-          <li><a href="#executive-overview" class="active">Executive Summary</a></li>
+          <li><a href="#executive-overview">Executive Summary</a></li>
           <li><a href="#system-architecture">System Architecture</a></li>
           <li><a href="#quickstart">Quickstart Guide</a></li>
         </ul>
@@ -387,7 +471,7 @@
         <div class="nav-group-title">Monetization & Payments</div>
         <ul class="nav-group-links">
           <li><a href="#khqr-gateway">National Bakong KHQR (NBC)</a></li>
-          <li><a href="#aba-payway">ABA PayWay & Banking Rails</a></li>
+          <li><a href="#aba-payway">ABA Mobile & ACLEDA Rails</a></li>
           <li><a href="#crypto-settlement">Crypto USDT Settlements</a></li>
           <li><a href="#telegram-bot">Telegram VIP Push (@penghuotbot)</a></li>
         </ul>
@@ -419,11 +503,11 @@
           </div>
           <div class="card">
             <div class="card-title">🧠 Kronos Foundation AI</div>
-            <div class="card-desc">Temporal Patch Quantizer (AAAI 2026) autoregressively modeling multi-horizon price cones.</div>
+            <div class="card-desc">Temporal Patch Quantizer (AAAI 2026) autoregressively modeling multi-horizon price cones on NVIDIA RTX 3050 CUDA.</div>
           </div>
           <div class="card">
             <div class="card-title">🇰🇭 Bakong KHQR Gateway</div>
-            <div class="card-desc">Production EMVCo dynamic QR code generator integrating ABA Pay, ACLEDA, Wing, and USDT.</div>
+            <div class="card-desc">Production NBC EMVCo dynamic QR code generator integrating official ABA Mobile, ACLEDA, and USDT.</div>
           </div>
           <div class="card">
             <div class="card-title">🛡️ Guaranteed Risk Armor</div>
@@ -463,40 +547,62 @@
         </pre>
       </section>
 
-      <!-- Section 3: Dual HFT Engines -->
-      <section id="engines">
-        <h2>⚡ Dual Computational HFT Engines</h2>
-        
-        <h3 id="cpp-engine">1. C++20 AVX2 SIMD Core</h3>
+      <!-- Section 3: Quickstart Guide -->
+      <section id="quickstart">
+        <h2>🚀 Quickstart Guide</h2>
         <p>
-          Located in <code>quant-terminal/cpp-engine/</code>, this bare-metal binary uses Intel/AMD AVX2 SIMD intrinsic instructions to compute top-of-book microstructural features in parallel:
+          Get the entire AlphaForge quantitative stack running on your machine in 3 simple steps:
+        </p>
+        <pre>
+# 1. Start the Master Web Terminal (Port 4000)
+node server/index.js
+
+# 2. Start the Compiled Go Ultra-HFT Engine (Port 4050)
+cd go-engine && ./alphaforge-quant.exe paxgusdt
+
+# 3. Start the Kronos AI Forecaster on NVIDIA RTX 3050 CUDA (Port 5050)
+start_kronos_gpu.bat
+        </pre>
+        <p>
+          Once launched, visit <code>http://localhost:4000/</code> to see live sub-microsecond telemetry streaming in the top navigation bar.
+        </p>
+      </section>
+
+      <!-- Section 4: Dual HFT Engines -->
+      <section id="cpp-engine">
+        <h2>⚡ C++20 AVX2 SIMD Core (41.6 Nanoseconds)</h2>
+        <p>
+          Located in <code>quant-terminal/cpp-engine/</code>, this bare-metal binary uses Intel/AMD AVX2 SIMD intrinsic instructions (<code>_mm256_loadu_pd</code>, <code>_mm256_fmadd_pd</code>) to compute top-of-book microstructural features in parallel:
         </p>
         <ul>
           <li><b>Order Book Imbalance (OBI)</b>: <code>OBI = (V_bid - V_ask) / (V_bid + V_ask)</code></li>
           <li><b>Merton Jump-Diffusion Simulation</b>: Monte Carlo jump risk evaluation.</li>
           <li><b>Throughput</b>: 24,025,756 ticks/sec with mean latency of <b>41.6 nanoseconds</b>.</li>
         </ul>
+      </section>
 
-        <h3 id="go-engine">2. Go Ultra-HFT Engine (Port 4050)</h3>
+      <section id="go-engine">
+        <h2>⚡ Go Ultra-HFT Engine (0.24 Microseconds)</h2>
         <p>
           Located in <code>quant-terminal/go-engine/</code>, this standalone compiled daemon runs concurrent Goroutines consuming the live Binance WebSocket feed for PAXG/USDT (Spot Gold) and BTC/USDT:
         </p>
         <ul>
-          <li><b>Average Tick Latency</b>: <b>0.24 µs to 0.57 µs</b>.</li>
+          <li><b>Average Tick Latency</b>: <b>0.24 µs to 0.57 µs</b> (sub-microsecond).</li>
           <li><b>HTTP Telemetry Endpoint</b>: <code>GET http://localhost:4050/health</code></li>
           <li><b>Memory Footprint</b>: Under 2.0 MB RAM across 8 Goroutines.</li>
+          <li><b>Uptime</b>: Production daemon built for multi-day non-stop market ingest.</li>
         </ul>
       </section>
 
-      <!-- Section 4: Kronos AI -->
-      <section id="kronos">
-        <h2>🧠 Kronos Deep Learning Foundation Model</h2>
+      <!-- Section 5: Kronos AI -->
+      <section id="kronos-foundation">
+        <h2>🧠 Kronos Deep Learning Foundation Model (AAAI 2026)</h2>
         <p>
           Based on the AAAI 2026 quantitative finance research, Kronos utilizes <b>Binary Spherical Quantization (BSQ)</b> to discretize continuous price/volume tensors into compact 12-dimensional temporal tokens.
         </p>
 
         <div class="callout callout-info">
-          <b>How Kronos Generates Alpha:</b> Unlike traditional indicators (e.g. RSI or Moving Averages) which only react to past candles, Kronos simulates 50 forward trajectories using spatial-temporal patch attention to calculate a probabilistic median path, 90% upper confidence cone, and 10% lower drawdown cone.
+          <b>Hardware Acceleration Active:</b> Running on your <b>NVIDIA GeForce RTX 3050 Laptop GPU (4GB VRAM)</b> with PyTorch 2.14.1 + CUDA 12.6 on Port 5050.
         </div>
 
         <table>
@@ -527,49 +633,83 @@
         </table>
       </section>
 
-      <!-- Section 5: Risk & Security -->
-      <section id="security">
-        <h2>🛡️ Bank-Grade Security & Capital Guard</h2>
+      <!-- Section 6: Risk Management -->
+      <section id="risk-armor">
+        <h2>🛡️ Spread Armor & Stop-Loss Protocol</h2>
         <p>
           Trading with real money requires absolute mathematical risk boundaries. AlphaForge enforces three non-negotiable security layers:
         </p>
-
-        <div class="callout callout-warn">
-          <b>MANDATORY API SECURITY RULE:</b> When creating API keys on Binance or Capital.com, check <b>"Enable Reading"</b> and <b>"Enable Spot Trading"</b> ONLY. <b>LEAVE "ENABLE WITHDRAWALS" PERMANENTLY UNCHECKED.</b>
-        </div>
 
         <ul>
           <li><b>Micro-Capital Safety Cap</b>: In <code>realTradingService.js</code>, maximum allocated trade size is hard-capped at <code>$20.00</code>.</li>
           <li><b>2% Max Loss Constraint</b>: If a position loses more than 2% ($0.40 on a $20 trade), the order is immediately liquidated.</li>
           <li><b>Spread Armor Gate</b>: If the broker's bid-ask spread exceeds <code>0.05%</code>, trading is frozen to prevent predatory slippage.</li>
-          <li><b>Exchange-Side OCO Protection</b>: Stop-loss orders are posted directly to the exchange matching engine, protecting capital even during internet failure.</li>
         </ul>
       </section>
 
-      <!-- Section 6: Bakong KHQR & Payments -->
-      <section id="khqr">
-        <h2>🇰🇭 Cambodian Bakong KHQR & Multi-Rail Monetization</h2>
+      <section id="circuit-breakers">
+        <h2>⚡ Exchange Circuit Breakers</h2>
         <p>
-          AlphaForge includes a complete payment gateway (<code>paymentGatewayService.js</code>) conforming to the <b>National Bank of Cambodia (NBC) KHQR standard</b>.
+          AlphaForge features built-in emergency circuit breakers designed to protect house balance:
         </p>
+        <div class="callout callout-warn">
+          <b>Daily Drawdown Lock:</b> If net daily loss reaches $2.00 (10% of a $20 balance), all trading is automatically suspended for 24 hours. No new orders can be submitted until the daily cooldown expires.
+        </div>
+      </section>
 
-        <h3>Supported Payment Rails:</h3>
+      <section id="binance-integration">
+        <h2>🔑 Binance Spot & Futures API Connection</h2>
+        <p>
+          Connect your live exchange account securely to execute algorithmic micro-orders:
+        </p>
+        <div class="callout callout-warn">
+          <b>MANDATORY API SECURITY RULE:</b> In your Binance API settings, enable <b>"Spot & Margin Trading"</b> only. <b>LEAVE "ENABLE WITHDRAWALS" PERMANENTLY UNCHECKED.</b> Even if someone obtained your keys, they cannot withdraw a single cent.
+        </div>
         <ol>
-          <li><b>Bakong KHQR (EMVCo Dynamic QR)</b>: Instant payment via ABA Mobile, ACLEDA, Wing, Canadia, Sathapana, etc.</li>
-          <li><b>Bakong App Deep Link</b>: <code>bakong://qr?data=...</code> for one-tap mobile payment.</li>
-          <li><b>Crypto USDT</b>: Native TRC-20 and BEP-20 settlement addresses.</li>
-          <li><b>Automated Telegram Webhooks</b>: Sends instant revenue alerts to <code>@penghuotbot</code> when payments are confirmed.</li>
+          <li>Log in to Binance ➔ API Management ➔ Create API Key named <code>AlphaForge-Pilot</code>.</li>
+          <li>Whitelist your IP address (recommended).</li>
+          <li>Enter the API Key and Secret into the terminal's <b>"Micro-Account Real Money"</b> modal.</li>
         </ol>
+      </section>
 
+      <!-- Section 7: Bakong KHQR & Payments -->
+      <section id="khqr-gateway">
+        <h2>🇰🇭 National Bakong KHQR (NBC Standard)</h2>
+        <p>
+          AlphaForge includes a complete payment gateway (<code>paymentGatewayService.js</code>) conforming to the <b>National Bank of Cambodia (NBC) KHQR EMVCo standard</b>.
+        </p>
         <pre>
-// Sample Generated Bakong KHQR EMVCo Payload
+// Sample Generated Bakong KHQR EMVCo Payload with CRC16-CCITT Checksum
 00020101021229240020penghuot_lim@ababank520459995303840540599.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ4PRQ2-B77363043E8E
         </pre>
       </section>
 
-      <!-- Section 7: Telegram VIP Bot -->
-      <section id="telegram">
-        <h2>📤 Telegram VIP Bot Integration (`@penghuotbot`)</h2>
+      <section id="aba-payway">
+        <h2>🏦 Official ABA Mobile & ACLEDA Bank Rails</h2>
+        <p>
+          CEO Lim Penghuot's official bank QR codes are integrated into the terminal's payment modal:
+        </p>
+        <ul>
+          <li><b>ABA Mobile</b>: Scannable with ABA Mobile App.</li>
+          <li><b>ACLEDA Bank</b>: Scannable with ACLEDA Mobile.</li>
+          <li><b>Live KHR Conversion</b>: Automatic real-time currency conversion (e.g., $29 = ៛119,000; $99 = ៛405,000; $299 = ៛1,225,000).</li>
+        </ul>
+      </section>
+
+      <section id="crypto-settlement">
+        <h2>🪙 Crypto USDT Settlements</h2>
+        <p>
+          For international clients, AlphaForge provides automated multi-chain deposit endpoints:
+        </p>
+        <ul>
+          <li><b>USDT TRC-20</b>: Low-fee Tron settlement network.</li>
+          <li><b>USDT BEP-20</b>: Binance Smart Chain fast settlement.</li>
+          <li><b>Bitcoin (BTC)</b>: Native SegWit address.</li>
+        </ul>
+      </section>
+
+      <section id="telegram-bot">
+        <h2>📤 Telegram VIP Push Bot (@penghuotbot)</h2>
         <p>
           CEO Lim Penghuot's verified bot (<code>@penghuotbot</code>) delivers real-time notifications directly to mobile devices:
         </p>
@@ -581,9 +721,9 @@
         </ul>
       </section>
 
-      <!-- Section 8: API Reference -->
+      <!-- Section 8: Developer API Reference -->
       <section id="api-reference">
-        <h2>🔌 API Reference</h2>
+        <h2>🔌 REST Endpoints Reference</h2>
         
         <table>
           <thead>
@@ -633,12 +773,142 @@
         </table>
       </section>
 
+      <section id="websocket-spec">
+        <h2>📊 WebSocket Feed Protocol (`ws://localhost:4000/ws`)</h2>
+        <p>
+          Connect to the real-time WebSocket stream to ingest sub-millisecond price ticks, order book updates, and AI bot signals:
+        </p>
+        <pre>
+// Sample JSON WebSocket Message Payload
+{
+  "type": "MARKET_TICK",
+  "symbol": "XAU-USD",
+  "price": 4106.04,
+  "timestamp": 1792654000000,
+  "indicators": {
+    "emaFast": 4106.29,
+    "emaSlow": 4106.42,
+    "rsi": 32.71,
+    "obi": -1
+  }
+}
+        </pre>
+      </section>
+
     </main>
   </div>
 
   <footer>
     AlphaForge Quant Terminal &copy; 2026. Engineered for CEO Lim Penghuot. Proprietary & Confidential.
   </footer>
+
+  <!-- Persistent Floating Quick Action: Back to Trading Chart -->
+  <a href="/" class="floating-back-chart" title="Return to Live Trading Chart">
+    <span>📊</span>
+    <span>Back to Trading Chart</span>
+  </a>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebarLinks = document.querySelectorAll('#docsSidebar a');
+      const allAnchorLinks = document.querySelectorAll('a[href^="#"]');
+      const sections = document.querySelectorAll('main section');
+
+      // Robust smooth click with visual target flash
+      allAnchorLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const href = link.getAttribute('href');
+          if (href && href.startsWith('#') && href.length > 1) {
+            const targetEl = document.getElementById(href.substring(1));
+            if (targetEl) {
+              e.preventDefault();
+              const headerOffset = 76;
+              const elementPosition = targetEl.getBoundingClientRect().top;
+              const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+              window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+              });
+
+              history.pushState(null, null, href);
+
+              // Update active sidebar link
+              sidebarLinks.forEach(l => l.classList.remove('active'));
+              const activeSidebarLink = document.querySelector(`#docsSidebar a[href="${href}"]`);
+              if (activeSidebarLink) {
+                activeSidebarLink.classList.add('active');
+              }
+
+              // Visual feedback pulse on the section
+              targetEl.classList.remove('section-highlight');
+              void targetEl.offsetWidth; // force DOM reflow
+              targetEl.classList.add('section-highlight');
+              setTimeout(() => {
+                targetEl.classList.remove('section-highlight');
+              }, 1500);
+            }
+          }
+        });
+      });
+
+      // Scroll spy for sidebar links
+      window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop - 120;
+          if (window.pageYOffset >= sectionTop) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        // If at bottom of page, highlight the last section
+        if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight - 40) {
+          if (sections.length > 0) {
+            current = sections[sections.length - 1].getAttribute('id');
+          }
+        }
+
+        if (current) {
+          sidebarLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+              link.classList.add('active');
+            }
+          });
+        }
+      });
+
+      // Wrap code blocks and inject Copy button
+      document.querySelectorAll('pre').forEach(pre => {
+        const wrap = document.createElement('div');
+        wrap.className = 'code-wrap';
+        pre.parentNode.insertBefore(wrap, pre);
+        wrap.appendChild(pre);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-code-btn';
+        copyBtn.innerHTML = '📋 Copy';
+        copyBtn.title = 'Copy code snippet';
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(pre.innerText.trim()).then(() => {
+            copyBtn.innerHTML = '✅ Copied!';
+            copyBtn.style.borderColor = '#10b981';
+            copyBtn.style.color = '#10b981';
+            setTimeout(() => {
+              copyBtn.innerHTML = '📋 Copy';
+              copyBtn.style.borderColor = '';
+              copyBtn.style.color = '';
+            }, 2000);
+          }).catch(() => {
+            copyBtn.innerHTML = 'Copied!';
+            setTimeout(() => { copyBtn.innerHTML = '📋 Copy'; }, 2000);
+          });
+        });
+        wrap.appendChild(copyBtn);
+      });
+    });
+  </script>
 
 </body>
 </html>
