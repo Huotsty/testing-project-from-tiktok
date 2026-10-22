@@ -18,6 +18,11 @@ class KronosPredictor {
   constructor(options = {}) {
     this.pythonServiceUrl = options.pythonServiceUrl || 'http://127.0.0.1:5050';
     this.isPythonServiceAvailable = false;
+    this.gpuInfo = {
+      cudaActive: false,
+      device: 'CPU',
+      vramAllocatedMb: 0
+    };
     this.maxContext = options.maxContext || 512;
     this.codebookSize = 1024; // 10-bit Binary Spherical Quantization codebook
     this.dimension = 8;       // Feature projection dimensions: [r_close, r_open, high_spread, low_spread, body, vol_ratio, amt_ratio, range_vol]
@@ -26,6 +31,8 @@ class KronosPredictor {
     this.hyperplanes = this.initHyperplanes(this.dimension, 10);
     this.cache = new Map(); // Sub-millisecond memoization cache for high-throughput concurrency
     this.checkPythonService();
+    this.probeInterval = setInterval(() => this.checkPythonService(), 4000);
+    if (this.probeInterval.unref) this.probeInterval.unref();
   }
 
   /**
@@ -53,8 +60,26 @@ class KronosPredictor {
    */
   async checkPythonService() {
     try {
-      const req = http.get(`${this.pythonServiceUrl}/health`, { timeout: 1000 }, (res) => {
-        this.isPythonServiceAvailable = res.statusCode === 200;
+      const req = http.get(`${this.pythonServiceUrl}/health`, { timeout: 1500 }, (res) => {
+        if (res.statusCode === 200) {
+          let buf = '';
+          res.on('data', chunk => buf += chunk);
+          res.on('end', () => {
+            try {
+              const data = JSON.parse(buf);
+              this.isPythonServiceAvailable = true;
+              this.gpuInfo = {
+                cudaActive: data.cuda_active || false,
+                device: data.device || 'CPU',
+                vramAllocatedMb: data.vram_allocated_mb || 0
+              };
+            } catch (err) {
+              this.isPythonServiceAvailable = true;
+            }
+          });
+        } else {
+          this.isPythonServiceAvailable = false;
+        }
       });
       req.on('error', () => {
         this.isPythonServiceAvailable = false;
@@ -270,6 +295,9 @@ class KronosPredictor {
       model: 'Kronos Foundation Model (AAAI 2026)',
       status: 'ONLINE',
       mode: this.isPythonServiceAvailable ? 'PYTORCH_GPU_INFERENCE' : 'NATIVE_BSQ_QUANTIZER',
+      device: this.gpuInfo ? this.gpuInfo.device : 'CPU',
+      cudaActive: this.gpuInfo ? this.gpuInfo.cudaActive : false,
+      vramAllocatedMb: this.gpuInfo ? this.gpuInfo.vramAllocatedMb : 0,
       symbol: options.symbol || 'ASSET',
       currentPrice: Number(currentPrice.toFixed(2)),
       horizon,

@@ -717,7 +717,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!el || !f) return;
     const sign = f.expectedReturnPct >= 0 ? '+' : '';
     const color = f.expectedReturnPct >= 0 ? '#00f59b' : '#ff3366';
-    el.innerHTML = `<span style="color:${color}">${sign}${f.expectedReturnPct}%</span> [${f.regime}] (RankIC: +${f.rankIC})`;
+    const gpuBadge = f.cudaActive 
+      ? `<span style="background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; padding:1px 5px; border-radius:3px; font-size:8.5px; margin-right:4px;">⚡ RTX 3050 GPU</span>`
+      : '';
+    el.innerHTML = `${gpuBadge}<span style="color:${color}">${sign}${f.expectedReturnPct}%</span> [${f.regime}] (RankIC: +${f.rankIC})`;
   }
 
   // Live Real Feed Mode Toggle

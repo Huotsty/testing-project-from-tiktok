@@ -9,11 +9,11 @@ echo ==============================================================
 echo.
 cd /d "%~dp0"
 
-echo [*] Initializing PyTorch CUDA Runtime...
-"C:\Users\ASUS\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe" server\core\kronos_service.py
+echo [*] Initializing PyTorch CUDA Runtime on NVIDIA RTX 3050...
+py -3.13 server\core\kronos_service.py
 
 if %ERRORLEVEL% NEQ 0 (
-    echo [FALLBACK] Attempting default Python environment...
-    python server\core\kronos_service.py
+    echo [FALLBACK] Attempting AppData Python 3.13...
+    "C:\Users\ASUS\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe" server\core\kronos_service.py
 )
 pause
