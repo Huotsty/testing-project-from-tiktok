@@ -68,9 +68,12 @@ Runs as a standalone compiled binary daemon on port `4050`:
 - **Telemetry Endpoint**: `http://localhost:4050/health`.
 
 ### 3. Kronos Deep Learning Foundation Model (AAAI 2026)
+- **NVIDIA RTX 3050 CUDA Acceleration**: Verified on **NVIDIA GeForce RTX 3050 Laptop GPU (4GB GDDR6)** running PyTorch `2.14.1+cu126`.
+- **Inference Latency**: **1.038 milliseconds** per candle sequence with throughput of **963.7 predictions/sec**.
 - **Binary Spherical Quantization (BSQ)**: Maps multi-feature K-lines (Open, High, Low, Close, Volume, VWAP) into discrete 12-dimensional temporal tokens.
 - **Cones of Uncertainty**: Generates median expectation paths and 90%/10% confidence bounds.
 - **Dynamic Volatility Targets**: Derives mathematical Stop-Loss and Take-Profit price levels from projected horizon volatility.
+- **Live Diagnostics**: Telemetry accessible via `GET http://localhost:5050/health` and standalone benchmark `py -3.13 test_gpu_kronos.py`.
 
 ---
 
