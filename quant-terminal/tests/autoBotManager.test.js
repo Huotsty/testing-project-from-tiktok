@@ -93,4 +93,13 @@ test('AutoBotManager Suite', async (t) => {
     // Bot should remain in 100% cash, 0 position
     assert.strictEqual(bot.position, 0, 'Must protect capital and not buy during shock');
   });
+
+  await t.test('Updates bot strategy dynamically to kronosAlpha', () => {
+    const manager = new AutoBotManager();
+    const updated = manager.updateStrategy('BTC-USD', 'kronosAlpha', { horizon: 12, minReturn: 0.5 });
+    assert.strictEqual(updated, true, 'Update strategy should succeed');
+    assert.strictEqual(manager.bots['BTC-USD'].strategy, 'kronosAlpha', 'Bot strategy updated to kronosAlpha');
+    assert.strictEqual(manager.bots['BTC-USD'].params.horizon, 12, 'Param horizon updated');
+  });
 });
+

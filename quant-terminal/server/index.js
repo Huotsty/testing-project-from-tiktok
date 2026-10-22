@@ -435,6 +435,14 @@ app.post('/api/auto-bot/stop', (req, res) => {
   res.json({ success: true, bots: autoBotManager.getStatus() });
 });
 
+app.post('/api/auto-bot/strategy', (req, res) => {
+  const { symbol, strategy, params } = req.body || {};
+  if (symbol && strategy) {
+    autoBotManager.updateStrategy(symbol, strategy, params);
+  }
+  res.json({ success: true, bots: autoBotManager.getStatus() });
+});
+
 app.post('/api/auto-bot/reset', (req, res) => {
   const { symbol } = req.body || {};
   if (symbol) {
@@ -482,10 +490,15 @@ liveFeedService.onTick((tick) => {
   const candles = candleCache[tick.symbol];
   if (candles && candles.length > 0) {
     const lastCandle = candles[candles.length - 1];
-    if (tick.price > lastCandle.high) lastCandle.high = tick.price;
-    if (tick.price < lastCandle.low) lastCandle.low = tick.price;
-    lastCandle.close = tick.price;
-    lastCandle.volume += Math.floor(tick.volume || 1);
+    // If incoming real live tick is unanchored (>15% discrepancy on initial connect), re-anchor smoothly
+    if (Math.abs(tick.price - lastCandle.close) / (lastCandle.close || 1) > 0.15) {
+      candleCache[tick.symbol] = marketGen.generateHistory(tick.symbol, candles.length, 15);
+    } else {
+      if (tick.price > lastCandle.high) lastCandle.high = tick.price;
+      if (tick.price < lastCandle.low) lastCandle.low = tick.price;
+      lastCandle.close = tick.price;
+      lastCandle.volume += Math.floor(tick.volume || 1);
+    }
   }
 
   const tickMsg = JSON.stringify({

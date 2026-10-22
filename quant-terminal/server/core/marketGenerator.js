@@ -7,10 +7,10 @@
 class MarketGenerator {
   constructor() {
     this.assets = {
-      'XAU-USD': { name: 'Spot Gold ($/oz)', initialPrice: 2685, drift: 0.00004, volatility: 0.008, jumpProb: 0.012, jumpScale: 0.009 },
-      'BTC-USD': { name: 'Bitcoin', initialPrice: 65400, drift: 0.0001, volatility: 0.018, jumpProb: 0.03, jumpScale: 0.02 },
-      'ETH-USD': { name: 'Ethereum', initialPrice: 3450, drift: 0.00012, volatility: 0.022, jumpProb: 0.035, jumpScale: 0.025 },
-      'SOL-USD': { name: 'Solana', initialPrice: 152, drift: 0.00015, volatility: 0.030, jumpProb: 0.04, jumpScale: 0.035 },
+      'XAU-USD': { name: 'Spot Gold ($/oz)', initialPrice: 4098, drift: 0.00004, volatility: 0.008, jumpProb: 0.012, jumpScale: 0.009 },
+      'BTC-USD': { name: 'Bitcoin', initialPrice: 82500, drift: 0.0001, volatility: 0.018, jumpProb: 0.03, jumpScale: 0.02 },
+      'ETH-USD': { name: 'Ethereum', initialPrice: 3850, drift: 0.00012, volatility: 0.022, jumpProb: 0.035, jumpScale: 0.025 },
+      'SOL-USD': { name: 'Solana', initialPrice: 195, drift: 0.00015, volatility: 0.030, jumpProb: 0.04, jumpScale: 0.035 },
       'NVDA': { name: 'Nvidia Corp', initialPrice: 128, drift: 0.00018, volatility: 0.020, jumpProb: 0.025, jumpScale: 0.02 },
       'SPY': { name: 'S&P 500 ETF', initialPrice: 565, drift: 0.00005, volatility: 0.007, jumpProb: 0.01, jumpScale: 0.009 },
       'USOIL': { name: 'WTI Crude Oil', initialPrice: 71.50, drift: 0.00003, volatility: 0.014, jumpProb: 0.018, jumpScale: 0.015 },

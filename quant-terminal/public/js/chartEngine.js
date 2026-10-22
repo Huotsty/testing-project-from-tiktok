@@ -159,6 +159,20 @@ class ChartEngine {
       if (this.activeBracket.takeProfitPrice) maxPrice = Math.max(maxPrice, this.activeBracket.takeProfitPrice);
     }
 
+    // Include Kronos forecast cone in price bounds so future projections never clip
+    if (this.showKronos && this.kronosForecast) {
+      if (this.kronosForecast.upperCone90) {
+        for (const p of this.kronosForecast.upperCone90) {
+          if (p && p > maxPrice) maxPrice = p;
+        }
+      }
+      if (this.kronosForecast.lowerCone10) {
+        for (const p of this.kronosForecast.lowerCone10) {
+          if (p && p < minPrice) minPrice = p;
+        }
+      }
+    }
+
     // Add breathing room
     const priceRange = (maxPrice - minPrice) || 1;
     minPrice -= priceRange * 0.05;

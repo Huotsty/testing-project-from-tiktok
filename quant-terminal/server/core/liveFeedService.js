@@ -15,10 +15,10 @@ class LiveFeedService {
     this.ws = null;
     this.isLive = false;
     this.latestPrices = {
-      'XAU-USD': 2685.00,
-      'BTC-USD': 65000.00,
-      'ETH-USD': 3500.00,
-      'SOL-USD': 155.00,
+      'XAU-USD': 4098.00,
+      'BTC-USD': 82500.00,
+      'ETH-USD': 3850.00,
+      'SOL-USD': 195.00,
       'DOGE-USD': 0.125
     };
     this.listeners = new Set();

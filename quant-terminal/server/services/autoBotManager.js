@@ -141,6 +141,19 @@ class AutoBotManager {
     return false;
   }
 
+  updateStrategy(symbol, strategy, params = {}) {
+    if (this.bots[symbol]) {
+      this.bots[symbol].strategy = strategy;
+      if (params && Object.keys(params).length > 0) {
+        this.bots[symbol].params = { ...this.bots[symbol].params, ...params };
+      }
+      this.saveState();
+      this.broadcast({ type: 'BOT_CONFIG_UPDATED', symbol, bot: this.getBotStatus(symbol) });
+      return true;
+    }
+    return false;
+  }
+
   startAll() {
     for (const symbol of Object.keys(this.bots)) {
       this.bots[symbol].active = true;

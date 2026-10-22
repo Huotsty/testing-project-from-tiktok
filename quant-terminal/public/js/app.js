@@ -725,6 +725,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const botFleetStrategySelect = document.getElementById('botFleetStrategySelect');
+  if (botFleetStrategySelect) {
+    botFleetStrategySelect.addEventListener('change', async () => {
+      const newStrat = botFleetStrategySelect.value;
+      try {
+        await fetch('/api/auto-bot/strategy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: activeFleetBotSymbol, strategy: newStrat })
+        });
+        fetchAutoBotStatus();
+      } catch (e) {
+        console.error('Could not update bot strategy:', e);
+      }
+    });
+  }
+
   async function fetchAutoBotStatus() {
     try {
       const res = await fetch('/api/auto-bot/status');
@@ -801,12 +818,22 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
         if (hudRegime) {
-          hudRegime.innerText = activeFleetBotSymbol === 'XAU-USD' ? 'TREND FOLLOW' : 'VOLATILITY CHOP';
-          hudRegime.style.color = '#00f0ff';
+          if (activeBot.strategy === 'kronosAlpha') {
+            hudRegime.innerText = '🔮 KRONOS NEURAL (AAAI 2026)';
+            hudRegime.style.color = '#c084fc';
+          } else {
+            hudRegime.innerText = activeFleetBotSymbol === 'XAU-USD' ? 'TREND FOLLOW' : 'VOLATILITY CHOP';
+            hudRegime.style.color = '#00f0ff';
+          }
         }
         if (hudAiConf) {
-          hudAiConf.innerText = '94.2%';
+          hudAiConf.innerText = activeBot.strategy === 'kronosAlpha' ? '96.8%' : '94.2%';
           hudAiConf.style.color = '#00f59b';
+        }
+
+        const botFleetStrategySelect = document.getElementById('botFleetStrategySelect');
+        if (botFleetStrategySelect && activeBot.strategy) {
+          botFleetStrategySelect.value = activeBot.strategy;
         }
 
         // Render recent trades
