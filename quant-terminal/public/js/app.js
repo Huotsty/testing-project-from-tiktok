@@ -1000,7 +1000,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSaveTelegram = document.getElementById('btnSaveTelegram');
   const tgStatusMsg = document.getElementById('tgStatusMsg');
   const tgNavDot = document.getElementById('tgNavDot');
-  const btnShareTelegram = document.getElementById('btnShareTelegram');
 
   async function checkTelegramStatus() {
     try {
@@ -1107,37 +1106,6 @@ document.addEventListener('DOMContentLoaded', () => {
       tgStatusMsg.style.color = '#ff3366';
     } finally {
       btnTestTelegram.disabled = false;
-    }
-  });
-
-  btnShareTelegram.addEventListener('click', async () => {
-    if (!latestBacktestSummary) {
-      alert('Please run a backtest first.');
-      return;
-    }
-
-    btnShareTelegram.innerText = 'Sending...';
-    try {
-      const res = await fetch('/api/telegram/share-backtest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          summary: latestBacktestSummary,
-          strategyName: strategySelect.options[strategySelect.selectedIndex].text,
-          symbol: currentSymbol
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        btnShareTelegram.innerText = '✅ Sent!';
-        setTimeout(() => { btnShareTelegram.innerText = '📤 Telegram'; }, 2000);
-      } else {
-        alert(data.error || 'Failed to send report. Please configure Telegram in top menu first.');
-        btnShareTelegram.innerText = '📤 Telegram';
-      }
-    } catch (e) {
-      alert('Error sending to Telegram: ' + e.message);
-      btnShareTelegram.innerText = '📤 Telegram';
     }
   });
 

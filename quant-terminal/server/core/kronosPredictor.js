@@ -251,9 +251,11 @@ class KronosPredictor {
       ? Number((currentPrice * (1 - Math.max(0.015, expectedHorizonVol * 0.5))).toFixed(2))
       : Number((currentPrice * (1 + Math.max(0.015, expectedHorizonVol * 0.5))).toFixed(2));
 
+    const returnRatio = Math.abs(expectedReturnPct) / 100;
+    const tpRatio = Math.max(0.03, Math.min(0.20, returnRatio * 1.5));
     const recommendedTP = expectedReturnPct >= 0
-      ? Number((currentPrice * (1 + Math.max(0.03, Math.abs(expectedReturnPct) * 1.5))).toFixed(2))
-      : Number((currentPrice * (1 - Math.max(0.03, Math.abs(expectedReturnPct) * 1.5))).toFixed(2));
+      ? Number((currentPrice * (1 + tpRatio)).toFixed(2))
+      : Number((currentPrice * (1 - tpRatio)).toFixed(2));
 
     let regime = 'STABLE_CONSOLIDATION';
     if (expectedReturnPct > 0.75 && rankIC > 0.25) {
