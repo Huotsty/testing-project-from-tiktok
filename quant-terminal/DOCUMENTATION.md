@@ -1,7 +1,8 @@
 # ⚡ AlphaForge Quant Terminal — Institutional Whitepaper & Platform Guide
 
-**Engineered for CEO Lim Penghuot**  
-*Sub-Microsecond Dual-Engine HFT • Kronos Foundation Model (AAAI 2026) • National Bakong KHQR Multi-Rail Payment Gateway*
+**Co-Founders:** CEO Lim Penghuot & Antigravity (Google DeepMind)  
+*Sub-Microsecond Dual-Engine HFT • Kronos Foundation Model (AAAI 2026) • National Bakong KHQR Multi-Rail Payment Gateway*  
+📖 **Complete Educational Log:** [Read the Zero-to-Hero Master Journal](ZERO_TO_HERO_MASTER_JOURNAL.md)
 
 ---
 
