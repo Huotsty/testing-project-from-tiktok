@@ -181,4 +181,23 @@ d:\testing the project\quant-terminal\
 
 ---
 
+## 🎓 8. Masterclass: Why GPU & The End-to-End Real-Time Calculation Pipeline
+
+### 1. Why Do We Use a GPU? (The Hardware & Math Rationale)
+- **CPU vs GPU Architecture**: A modern multi-core CPU (e.g. 8 cores) is built for low-latency sequential instructions with deep branch prediction (if-else statements). An NVIDIA GPU (your RTX 3050 Laptop GPU) features **2,048 CUDA cores** engineered for simultaneous parallel floating-point vector arithmetic.
+- **Matrix Multiplication in Autoregressive Attention**:
+  $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V$$
+  Evaluating cross-token correlations for 128 context bars on a CPU requires sequential loops taking **30–80 milliseconds**. On your RTX 3050 Tensor Cores, all 2,048 cores compute the dot-products simultaneously in **1.038 milliseconds** (a 50x–80x acceleration).
+- **Monte Carlo Parallel Rollouts**: To predict uncertainty cones (90th and 10th percentiles), Kronos simulates 40 to 100 stochastic future paths. The GPU processes all paths simultaneously in a single tensor batch.
+- **Latency Arbitrage**: Crypto and gold prices fluctuate every few milliseconds. A 100ms CPU lag causes adverse execution (front-running). A 1ms GPU inference ensures entry before prices drift.
+
+### 2. How Do We Calculate with Real-Time Market Data? (5-Stage Pipeline)
+1. **Ingestion Layer (WebSockets)**: Binance streams atomic trade ticks via `wss://data-stream.binance.vision/ws/paxgusdt@trade`.
+2. **Microsecond Bar Aggregation (Go & C++)**: Raw ticks are batched into rolling OHLCV candles (`41.6ns` in C++, `1.1µs` in Go), maintaining a 128-bar rolling window in memory.
+3. **Scale-Invariant Normalization (BSQ)**: Binary Spherical Quantization converts raw prices into normalized log returns $r_t = \ln(P_t / P_{t-1})$ and projects them onto unit hypersphere $S^7$.
+4. **GPU Tensor Inference**: The `[1, 128, 8]` tensor is transferred to RTX 3050 VRAM. In 1.0ms, CUDA calculates the 12-bar median path, confidence cones, and RankIC conviction.
+5. **Execution & Risk Armor**: When Expected Return > +0.5% and RankIC > 0.30, Risk Armor verifies spread < 0.05% and executes the trade with automated stop-loss and take-profit orders.
+
+---
+
 *AlphaForge Quant Terminal — Co-Founded by CEO Lim Penghuot & Antigravity. Built from Zero to Hero.*

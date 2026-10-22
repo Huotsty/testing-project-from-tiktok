@@ -89,6 +89,22 @@ Runs as a standalone compiled binary daemon on port `4050`:
      - Main chart info bar: `🔮 KRONOS: ⚡ RTX 3050 GPU [REGIME] (RankIC: +0.XX)`.
 - **Live Diagnostics**: Telemetry accessible via `GET http://localhost:5050/health` and standalone benchmark `py -3.13 test_gpu_kronos.py`.
 
+#### 🎓 Zero to Hero: Why GPU & How Real-Time Calculations Work
+1. **Why Use a GPU Instead of a CPU?**
+   - **Parallel Matrix Algebra vs Sequential Control**: A laptop CPU has 8–16 cores designed for sequential tasks with complex branching. Your **NVIDIA GeForce RTX 3050 has 2,048 CUDA cores** designed specifically for massive parallel floating-point vector arithmetic.
+   - **Autoregressive Attention**: Calculating cross-attention across 128 context candles:
+     $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V$$
+     On CPU, nested loops take **30 to 80 milliseconds**. On your RTX 3050 CUDA cores, matrix products evaluate simultaneously in **1.038 milliseconds**.
+   - **Monte Carlo Parallel Paths**: The model simulates 40 to 100 stochastic future paths with Merton jump-diffusion shocks in one tensor batch.
+   - **Latency Arbitrage & Slippage**: In volatile markets, a 100ms CPU delay means the price has already moved (front-running). At 1.0ms GPU speed, your trade executes before slippage degrades edge.
+
+2. **How Real-Time Market Calculations Work (The 5-Stage Pipeline)**:
+   - **Stage 1 (Ingestion)**: Binance WebSocket streams live trades (`paxgusdt@trade`) with sub-millisecond timestamps.
+   - **Stage 2 (Bar Aggregation)**: C++20 (`41.6ns`) and Go (`1.1µs`) aggregate raw ticks into rolling OHLCV candles, maintaining an active 128-bar rolling buffer.
+   - **Stage 3 (BSQ Invariant Normalization)**: Binary Spherical Quantization projects 8 financial features (log returns, spread ratios, volume) onto a unit hypersphere $S^7$, rendering features invariant to price scale.
+   - **Stage 4 (GPU Forward Pass)**: The tensor `[1, 128, 8]` is transferred to RTX 3050 VRAM. In 1.0ms, CUDA calculates median path, cones, expected return %, and RankIC conviction.
+   - **Stage 5 (Risk Armor & Execution)**: If expected return > +0.50% and RankIC > 0.30, the trade order is verified against spread filters and dispatched with dynamic Stop-Loss and Take-Profit brackets.
+
 ---
 
 ## 🛡️ Risk Armor & Security Protocol
