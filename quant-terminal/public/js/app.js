@@ -248,22 +248,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const params = {};
       if (strat === 'smaCrossover') {
-        params.fastPeriod = document.getElementById('paramFastPeriod').value;
-        params.slowPeriod = document.getElementById('paramSlowPeriod').value;
+        const elF = document.getElementById('paramFastPeriod');
+        const elS = document.getElementById('paramSlowPeriod');
+        params.fastPeriod = elF ? Number(elF.value) : 9;
+        params.slowPeriod = elS ? Number(elS.value) : 21;
       } else if (strat === 'rsiMeanReversion') {
-        params.period = document.getElementById('paramRsiPeriod').value;
-        params.oversold = document.getElementById('paramOversold').value;
-        params.overbought = document.getElementById('paramOverbought').value;
+        const elP = document.getElementById('paramRsiPeriod');
+        const elO = document.getElementById('paramOversold');
+        const elB = document.getElementById('paramOverbought');
+        params.period = elP ? Number(elP.value) : 14;
+        params.oversold = elO ? Number(elO.value) : 30;
+        params.overbought = elB ? Number(elB.value) : 70;
       } else if (strat === 'bollingerReversion') {
-        params.period = document.getElementById('paramBbPeriod').value;
-        params.multiplier = document.getElementById('paramBbMultiplier').value;
+        const elP = document.getElementById('paramBbPeriod');
+        const elM = document.getElementById('paramBbMultiplier');
+        params.period = elP ? Number(elP.value) : 20;
+        params.multiplier = elM ? Number(elM.value) : 2;
       } else if (strat === 'macdMomentum') {
-        params.fast = document.getElementById('paramMacdFast').value;
-        params.slow = document.getElementById('paramMacdSlow').value;
+        const elF = document.getElementById('paramMacdFast');
+        const elS = document.getElementById('paramMacdSlow');
+        params.fast = elF ? Number(elF.value) : 12;
+        params.slow = elS ? Number(elS.value) : 26;
       } else if (strat === 'kronosFoundationAlpha') {
-        params.horizon = document.getElementById('paramKronosHorizon').value;
-        params.minExpectedReturn = document.getElementById('paramKronosMinReturn').value;
-        params.minRankIC = document.getElementById('paramKronosRankIC').value;
+        const elH = document.getElementById('paramKronosHorizon');
+        const elR = document.getElementById('paramKronosMinReturn');
+        const elK = document.getElementById('paramKronosRankIC');
+        params.horizon = elH ? Number(elH.value) : 12;
+        params.minExpectedReturn = elR ? Number(elR.value) : 0.5;
+        params.minRankIC = elK ? Number(elK.value) : 0.30;
       }
 
       const body = {
@@ -597,6 +609,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
   strategySelect.addEventListener('change', renderStrategyParams);
   btnRunBacktest.addEventListener('click', () => runBacktest(true));
+
+  // Direct Institutional Tearsheet Send to Telegram Button
+  const btnShareTelegram = document.getElementById('btnShareTelegram');
+  if (btnShareTelegram) {
+    btnShareTelegram.addEventListener('click', async () => {
+      // If backtest hasn't run yet or summary is missing, run it first!
+      if (!latestBacktestSummary) {
+        btnShareTelegram.innerText = '⏳ Calculating...';
+        await runBacktest(false);
+      }
+
+      if (!latestBacktestSummary) {
+        btnShareTelegram.innerText = '⚠️ Backtest First';
+        setTimeout(() => { btnShareTelegram.innerText = '📤 Telegram'; }, 2000);
+        return;
+      }
+
+      btnShareTelegram.innerText = '📤 Sending...';
+      btnShareTelegram.style.color = '#38bdf8';
+
+      try {
+        const stratName = strategySelect.options[strategySelect.selectedIndex] ? strategySelect.options[strategySelect.selectedIndex].text : 'Active Strategy';
+        const res = await fetch('/api/telegram/share-backtest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            summary: latestBacktestSummary,
+            strategyName: stratName,
+            symbol: currentSymbol
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          btnShareTelegram.innerText = '✅ Sent to @penghuotbot!';
+          btnShareTelegram.style.color = '#00f59b';
+          btnShareTelegram.style.borderColor = '#00f59b';
+        } else {
+          btnShareTelegram.innerText = '⚠️ ' + (data.error || 'Failed');
+          btnShareTelegram.style.color = '#ff3366';
+        }
+      } catch (err) {
+        btnShareTelegram.innerText = '❌ Error';
+        btnShareTelegram.style.color = '#ff3366';
+      }
+
+      setTimeout(() => {
+        btnShareTelegram.innerText = '📤 Telegram';
+        btnShareTelegram.style.color = '';
+        btnShareTelegram.style.borderColor = '';
+      }, 3500);
+    });
+  }
 
   // Indicator Chips
   document.getElementById('toggleEma').addEventListener('click', function() {
