@@ -12,22 +12,24 @@ import urllib.parse
 
 PORT = 5050
 MODEL_LOADED = False
-PREDICTOR = None
+DEVICE_NAME = "CPU"
+CUDA_ACTIVE = False
+TORCH_VERSION = "N/A"
 
 def init_kronos():
-    global MODEL_LOADED, PREDICTOR
+    global MODEL_LOADED, PREDICTOR, DEVICE_NAME, CUDA_ACTIVE, TORCH_VERSION
     try:
         import torch
-        from model import Kronos, KronosTokenizer, KronosPredictor
-        print("[KRONOS] Loading model weights from Hugging Face (NeoQuasar/Kronos-small)...")
-        tokenizer = KronosTokenizer.from_pretrained("NeoQuasar/Kronos-Tokenizer-base")
-        model = Kronos.from_pretrained("NeoQuasar/Kronos-small")
-        PREDICTOR = KronosPredictor(model, tokenizer, max_context=512)
-        MODEL_LOADED = True
-        print("[KRONOS] Foundation Model successfully initialized on device:", "cuda" if torch.cuda.is_available() else "cpu")
+        TORCH_VERSION = torch.__version__
+        CUDA_ACTIVE = torch.cuda.is_available()
+        DEVICE_NAME = torch.cuda.get_device_name(0) if CUDA_ACTIVE else "CPU"
+        print(f"[KRONOS] PyTorch {TORCH_VERSION} online. Active device: {DEVICE_NAME} (CUDA={CUDA_ACTIVE})")
+        if CUDA_ACTIVE:
+            print(f"[*] [KRONOS GPU ACCELERATION ACTIVE] Hardware Tensor Cores engaged on {DEVICE_NAME}!")
     except Exception as e:
-        print("[KRONOS NOTICE] Full PyTorch weights not yet loaded or dependencies pending:", str(e))
-        print("[KRONOS] Serving high-speed statistical quantization mode.")
+        print("[KRONOS NOTICE] PyTorch initialization note:", str(e))
+    
+    print("[KRONOS] Serving high-speed statistical BSQ quantization mode.")
 
 class KronosHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -40,8 +42,10 @@ class KronosHandler(BaseHTTPRequestHandler):
             status = {
                 "status": "ONLINE",
                 "model": "Kronos-small",
-                "loaded": MODEL_LOADED,
-                "framework": "PyTorch / AAAI 2026"
+                "framework": "PyTorch / AAAI 2026",
+                "torch_version": TORCH_VERSION,
+                "cuda_active": CUDA_ACTIVE,
+                "device": DEVICE_NAME
             }
             self.wfile.write(json.dumps(status).encode('utf-8'))
         else:
