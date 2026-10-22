@@ -1,0 +1,28 @@
+[
+  {
+    "invoiceId": "INV-MVJ4PRQ2-B773",
+    "planId": "quant_pro",
+    "planName": "AlphaForge Quant Pro Terminal",
+    "customerName": "CEO Lim Penghuot",
+    "customerEmail": "",
+    "paymentMethod": "KHQR",
+    "amountUsd": 99,
+    "amountKhr": 405900,
+    "status": "PAID",
+    "createdAt": "2026-10-22T05:57:20.667Z",
+    "expiresAt": "2026-10-22T06:27:20.667Z",
+    "khqr": {
+      "rawUsd": "00020101021229240020penghuot_lim@ababank520459995303840540599.005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ4PRQ2-B77363043E8E",
+      "rawKhr": "00020101021229240020penghuot_lim@ababank52045999530311654064059005802KH5916ALPHAFORGE QUANT6010PHNOM PENH62210117INV-MVJ4PRQ2-B7736304D2A5",
+      "deepLink": "bakong://qr?data=00020101021229240020penghuot_lim%40ababank520459995303840540599.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH62210117INV-MVJ4PRQ2-B77363043E8E",
+      "bakongId": "penghuot_lim@ababank"
+    },
+    "crypto": {
+      "usdtTrc20": "TYDzsYqaWjHYa3N5yT9kZ26hZ4V3vX3v4T",
+      "usdtBep20": "0x71C...LimPenghuotAlphaForge",
+      "btc": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+    },
+    "paidAt": "2026-10-22T05:57:26.018Z",
+    "paymentProof": "Bakong Mobile App QR Scan"
+  }
+]

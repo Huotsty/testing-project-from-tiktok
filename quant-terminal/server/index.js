@@ -20,7 +20,10 @@ const realTradingService = require('./services/realTradingService');
 const AutoBotManager = require('./services/autoBotManager');
 const kronosPredictor = require('./core/kronosPredictor');
 
+const PaymentGatewayService = require('./services/paymentGatewayService');
+
 const autoBotManager = new AutoBotManager(telegramService);
+const paymentGatewayService = new PaymentGatewayService(telegramService);
 
 const tgConfigFile = path.join(__dirname, 'telegram_config.json');
 if (fs.existsSync(tgConfigFile)) {
@@ -479,6 +482,52 @@ app.post('/api/forecast/kronos', (req, res) => {
   const dataCandles = (candles && candles.length > 0) ? candles : (candleCache[symbol] || marketGen.generateHistory(symbol, 60, 15));
   const forecast = kronosPredictor.predict(dataCandles, { symbol, horizon: parseInt(horizon, 10) || 12 });
   res.json({ success: true, forecast });
+});
+
+// --- 10. Multi-Rail Payment Gateway (Bakong KHQR, ABA PayWay & Crypto) Routes ---
+app.get('/api/payments/plans', (req, res) => {
+  res.json({
+    success: true,
+    plans: paymentGatewayService.plans,
+    config: {
+      merchantName: paymentGatewayService.config.merchantName,
+      bakongAccountId: paymentGatewayService.config.bakongAccountId,
+      exchangeRateUsdKhr: paymentGatewayService.config.exchangeRateUsdKhr
+    }
+  });
+});
+
+app.post('/api/payments/create-invoice', (req, res) => {
+  try {
+    const { planId = 'starter_signal', customerName, customerEmail, paymentMethod = 'KHQR' } = req.body || {};
+    const invoice = paymentGatewayService.createInvoice(planId, customerName, customerEmail, paymentMethod);
+    res.json({ success: true, invoice });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/payments/invoice/:id', (req, res) => {
+  const invoice = paymentGatewayService.getInvoice(req.params.id);
+  if (!invoice) return res.status(404).json({ success: false, error: 'Invoice not found' });
+  res.json({ success: true, invoice });
+});
+
+app.post('/api/payments/confirm', (req, res) => {
+  const { invoiceId, paymentProof } = req.body || {};
+  if (!invoiceId) return res.status(400).json({ success: false, error: 'invoiceId required' });
+  const result = paymentGatewayService.confirmPayment(invoiceId, paymentProof);
+  if (result.error) return res.status(400).json({ success: false, error: result.error });
+  res.json({ success: true, ...result });
+});
+
+app.get('/api/payments/config', (req, res) => {
+  res.json({ success: true, ...paymentGatewayService.getConfig() });
+});
+
+app.post('/api/payments/config', (req, res) => {
+  const updated = paymentGatewayService.updateConfig(req.body || {});
+  res.json({ success: true, config: updated });
 });
 
 // Stream real-world ticks directly into terminal

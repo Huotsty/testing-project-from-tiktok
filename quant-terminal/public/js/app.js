@@ -1462,6 +1462,145 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- Monetization & Bakong KHQR Modal Handlers ---
+  const btnOpenPaymentModal = document.getElementById('btnOpenPaymentModal');
+  const btnClosePaymentModal = document.getElementById('btnClosePaymentModal');
+  const paymentModal = document.getElementById('paymentModal');
+  const payMethodSelect = document.getElementById('payMethodSelect');
+  const payCustomerName = document.getElementById('payCustomerName');
+  const planCards = document.querySelectorAll('.plan-card');
+  const invoiceRefDisplay = document.getElementById('invoiceRefDisplay');
+  const invoiceStatusPill = document.getElementById('invoiceStatusPill');
+  const khqrImg = document.getElementById('khqrImg');
+  const khqrPriceTag = document.getElementById('khqrPriceTag');
+  const btnBakongDeepLink = document.getElementById('btnBakongDeepLink');
+  const rawKhqrDisplay = document.getElementById('rawKhqrDisplay');
+  const btnSimulatePaymentConfirm = document.getElementById('btnSimulatePaymentConfirm');
+
+  let activePlanId = 'quant_pro';
+  let currentInvoice = null;
+
+  async function generatePaymentInvoice() {
+    try {
+      const customerName = payCustomerName ? (payCustomerName.value || 'CEO Lim Penghuot') : 'CEO Lim Penghuot';
+      const paymentMethod = payMethodSelect ? payMethodSelect.value : 'KHQR';
+      
+      const res = await fetch('/api/payments/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: activePlanId,
+          customerName,
+          paymentMethod
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.invoice) {
+        currentInvoice = data.invoice;
+        if (invoiceRefDisplay) invoiceRefDisplay.innerText = currentInvoice.invoiceId;
+        if (invoiceStatusPill) {
+          invoiceStatusPill.innerText = '🟡 AWAITING SCAN';
+          invoiceStatusPill.style.background = 'rgba(234, 179, 8, 0.15)';
+          invoiceStatusPill.style.color = '#facc15';
+          invoiceStatusPill.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+        }
+
+        if (paymentMethod === 'KHQR') {
+          const khqrData = currentInvoice.khqr.rawUsd;
+          if (khqrImg) khqrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(khqrData)}`;
+          if (khqrPriceTag) khqrPriceTag.innerText = `$${currentInvoice.amountUsd}.00 USD (៛${currentInvoice.amountKhr.toLocaleString()} KHR)`;
+          if (btnBakongDeepLink) {
+            btnBakongDeepLink.style.display = 'inline-flex';
+            btnBakongDeepLink.href = currentInvoice.khqr.deepLink;
+          }
+          if (rawKhqrDisplay) rawKhqrDisplay.innerText = khqrData;
+        } else if (paymentMethod === 'USDT') {
+          const addr = currentInvoice.crypto.usdtTrc20;
+          if (khqrImg) khqrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(addr)}`;
+          if (khqrPriceTag) khqrPriceTag.innerText = `${currentInvoice.amountUsd} USDT (TRC-20)`;
+          if (btnBakongDeepLink) btnBakongDeepLink.style.display = 'none';
+          if (rawKhqrDisplay) rawKhqrDisplay.innerText = `USDT TRC-20 Address: ${addr}`;
+        } else if (paymentMethod === 'BTC') {
+          const addr = currentInvoice.crypto.btc;
+          if (khqrImg) khqrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(addr)}`;
+          if (khqrPriceTag) khqrPriceTag.innerText = `$${currentInvoice.amountUsd} USD in BTC`;
+          if (btnBakongDeepLink) btnBakongDeepLink.style.display = 'none';
+          if (rawKhqrDisplay) rawKhqrDisplay.innerText = `Bitcoin SegWit Address: ${addr}`;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to generate invoice', e);
+    }
+  }
+
+  if (btnOpenPaymentModal && paymentModal) {
+    btnOpenPaymentModal.addEventListener('click', () => {
+      paymentModal.style.display = 'flex';
+      generatePaymentInvoice();
+    });
+  }
+
+  if (btnClosePaymentModal && paymentModal) {
+    btnClosePaymentModal.addEventListener('click', () => {
+      paymentModal.style.display = 'none';
+    });
+  }
+
+  planCards.forEach(card => {
+    card.addEventListener('click', () => {
+      planCards.forEach(c => {
+        c.classList.remove('active');
+        c.style.border = '1px solid rgba(255,255,255,0.08)';
+        c.style.background = 'rgba(15, 23, 42, 0.6)';
+      });
+      card.classList.add('active');
+      card.style.border = '2px solid #facc15';
+      card.style.background = 'rgba(234, 179, 8, 0.08)';
+      activePlanId = card.getAttribute('data-plan');
+      generatePaymentInvoice();
+    });
+  });
+
+  if (payMethodSelect) {
+    payMethodSelect.addEventListener('change', generatePaymentInvoice);
+  }
+
+  if (btnSimulatePaymentConfirm) {
+    btnSimulatePaymentConfirm.addEventListener('click', async () => {
+      if (!currentInvoice) return;
+      btnSimulatePaymentConfirm.disabled = true;
+      btnSimulatePaymentConfirm.innerText = 'Verifying...';
+
+      try {
+        const res = await fetch('/api/payments/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            invoiceId: currentInvoice.invoiceId,
+            paymentProof: 'Bakong Mobile App QR Scan (Verified by CEO)'
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (invoiceStatusPill) {
+            invoiceStatusPill.innerText = '🟢 PAID & CONFIRMED';
+            invoiceStatusPill.style.background = 'rgba(16, 185, 129, 0.15)';
+            invoiceStatusPill.style.color = '#10b981';
+            invoiceStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          }
+          btnSimulatePaymentConfirm.innerText = '🎉 Dispatched to @penghuotbot';
+          setTimeout(() => {
+            btnSimulatePaymentConfirm.disabled = false;
+            btnSimulatePaymentConfirm.innerText = '✅ Simulate Paid (Instant TG Alert)';
+          }, 3000);
+        }
+      } catch (e) {
+        btnSimulatePaymentConfirm.disabled = false;
+        btnSimulatePaymentConfirm.innerText = 'Error confirming';
+      }
+    });
+  }
+
   // Initialize
   renderStrategyParams();
   loadAssets();
