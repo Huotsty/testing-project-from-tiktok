@@ -1441,6 +1441,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const invoiceStatusPill = document.getElementById('invoiceStatusPill');
   const khqrImg = document.getElementById('khqrImg');
   const khqrPriceTag = document.getElementById('khqrPriceTag');
+  const qrBankHeader = document.getElementById('qrBankHeader');
+  const qrScanInstructions = document.getElementById('qrScanInstructions');
+  const btnTabAba = document.getElementById('btnTabAba');
+  const btnTabAcleda = document.getElementById('btnTabAcleda');
+  const btnTabDynamic = document.getElementById('btnTabDynamic');
+  const btnTabUsdt = document.getElementById('btnTabUsdt');
   const btnBakongDeepLink = document.getElementById('btnBakongDeepLink');
   const rawKhqrDisplay = document.getElementById('rawKhqrDisplay');
   const btnSimulatePaymentConfirm = document.getElementById('btnSimulatePaymentConfirm');
@@ -1448,10 +1454,32 @@ document.addEventListener('DOMContentLoaded', () => {
   let activePlanId = 'quant_pro';
   let currentInvoice = null;
 
+  function updateBankTabStyles(activeTab) {
+    const tabs = [
+      { el: btnTabAba, val: 'ABA_QR', col: '#00bcd4' },
+      { el: btnTabAcleda, val: 'ACLEDA_QR', col: '#3b82f6' },
+      { el: btnTabDynamic, val: 'DYNAMIC_KHQR', col: '#facc15' },
+      { el: btnTabUsdt, val: 'USDT', col: '#10b981' }
+    ];
+    tabs.forEach(t => {
+      if (!t.el) return;
+      if (t.val === activeTab) {
+        t.el.style.borderColor = t.col;
+        t.el.style.color = t.col;
+        t.el.style.background = `${t.col}18`;
+      } else {
+        t.el.style.borderColor = 'rgba(255,255,255,0.1)';
+        t.el.style.color = '#94a3b8';
+        t.el.style.background = 'transparent';
+      }
+    });
+  }
+
   async function generatePaymentInvoice() {
     try {
       const customerName = payCustomerName ? (payCustomerName.value || 'CEO Lim Penghuot') : 'CEO Lim Penghuot';
-      const paymentMethod = payMethodSelect ? payMethodSelect.value : 'KHQR';
+      const paymentMethod = payMethodSelect ? payMethodSelect.value : 'ABA_QR';
+      updateBankTabStyles(paymentMethod);
       
       const res = await fetch('/api/payments/create-invoice', {
         method: 'POST',
@@ -1473,10 +1501,32 @@ document.addEventListener('DOMContentLoaded', () => {
           invoiceStatusPill.style.borderColor = 'rgba(234, 179, 8, 0.3)';
         }
 
-        if (paymentMethod === 'KHQR') {
-          const khqrData = currentInvoice.khqr.rawUsd;
-          if (khqrImg) khqrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(khqrData)}`;
+        if (paymentMethod === 'ABA_QR') {
+          if (khqrImg) khqrImg.src = '/images/qr/aba_qr.jpg';
+          if (qrBankHeader) qrBankHeader.innerHTML = '<span style="font-size: 11px; font-weight: 900; color: #005f73;">ABA BANK</span><span style="font-size: 9px; font-weight: 800; color: #1e293b; background: #e2e8f0; padding: 1px 4px; border-radius: 2px;">KHQR</span>';
           if (khqrPriceTag) khqrPriceTag.innerText = `$${currentInvoice.amountUsd}.00 USD (៛${currentInvoice.amountKhr.toLocaleString()} KHR)`;
+          if (qrScanInstructions) qrScanInstructions.innerHTML = 'Scan with <b>ABA Mobile</b> or any Bakong-enabled banking app in Cambodia.';
+          if (btnBakongDeepLink) {
+            btnBakongDeepLink.style.display = 'inline-flex';
+            btnBakongDeepLink.href = currentInvoice.khqr.deepLink;
+          }
+          if (rawKhqrDisplay) rawKhqrDisplay.innerText = currentInvoice.khqr.rawUsd;
+        } else if (paymentMethod === 'ACLEDA_QR') {
+          if (khqrImg) khqrImg.src = '/images/qr/acleda_qr.jpg';
+          if (qrBankHeader) qrBankHeader.innerHTML = '<span style="font-size: 11px; font-weight: 900; color: #023e8a;">ACLEDA BANK</span><span style="font-size: 9px; font-weight: 800; color: #1e293b; background: #e2e8f0; padding: 1px 4px; border-radius: 2px;">KHQR</span>';
+          if (khqrPriceTag) khqrPriceTag.innerText = `$${currentInvoice.amountUsd}.00 USD (៛${currentInvoice.amountKhr.toLocaleString()} KHR)`;
+          if (qrScanInstructions) qrScanInstructions.innerHTML = 'Scan with <b>ACLEDA mobile</b> or any Bakong-enabled banking app in Cambodia.';
+          if (btnBakongDeepLink) {
+            btnBakongDeepLink.style.display = 'inline-flex';
+            btnBakongDeepLink.href = currentInvoice.khqr.deepLink;
+          }
+          if (rawKhqrDisplay) rawKhqrDisplay.innerText = currentInvoice.khqr.rawUsd;
+        } else if (paymentMethod === 'DYNAMIC_KHQR' || paymentMethod === 'KHQR') {
+          const khqrData = currentInvoice.khqr.rawUsd;
+          if (khqrImg) khqrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(khqrData)}`;
+          if (qrBankHeader) qrBankHeader.innerHTML = '<span style="font-size: 11px; font-weight: 900; color: #e11d48;">BAKONG</span><span style="font-size: 9px; font-weight: 800; color: #1e293b; background: #e2e8f0; padding: 1px 4px; border-radius: 2px;">KHQR</span>';
+          if (khqrPriceTag) khqrPriceTag.innerText = `$${currentInvoice.amountUsd}.00 USD (៛${currentInvoice.amountKhr.toLocaleString()} KHR)`;
+          if (qrScanInstructions) qrScanInstructions.innerHTML = 'Dynamic NBC EMVCo QR code with dynamic invoice amount embedding.';
           if (btnBakongDeepLink) {
             btnBakongDeepLink.style.display = 'inline-flex';
             btnBakongDeepLink.href = currentInvoice.khqr.deepLink;
@@ -1485,13 +1535,17 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (paymentMethod === 'USDT') {
           const addr = currentInvoice.crypto.usdtTrc20;
           if (khqrImg) khqrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(addr)}`;
+          if (qrBankHeader) qrBankHeader.innerHTML = '<span style="font-size: 11px; font-weight: 900; color: #26a17b;">USDT</span><span style="font-size: 9px; font-weight: 800; color: #1e293b; background: #e2e8f0; padding: 1px 4px; border-radius: 2px;">TRC-20</span>';
           if (khqrPriceTag) khqrPriceTag.innerText = `${currentInvoice.amountUsd} USDT (TRC-20)`;
+          if (qrScanInstructions) qrScanInstructions.innerHTML = 'Send USDT via Tron (TRC-20) or BSC (BEP-20) to CEO Lim Penghuot.';
           if (btnBakongDeepLink) btnBakongDeepLink.style.display = 'none';
           if (rawKhqrDisplay) rawKhqrDisplay.innerText = `USDT TRC-20 Address: ${addr}`;
         } else if (paymentMethod === 'BTC') {
           const addr = currentInvoice.crypto.btc;
           if (khqrImg) khqrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(addr)}`;
+          if (qrBankHeader) qrBankHeader.innerHTML = '<span style="font-size: 11px; font-weight: 900; color: #f7931a;">BITCOIN</span><span style="font-size: 9px; font-weight: 800; color: #1e293b; background: #e2e8f0; padding: 1px 4px; border-radius: 2px;">SEGWIT</span>';
           if (khqrPriceTag) khqrPriceTag.innerText = `$${currentInvoice.amountUsd} USD in BTC`;
+          if (qrScanInstructions) qrScanInstructions.innerHTML = 'Send Bitcoin to CEO Lim Penghuot Native SegWit Address.';
           if (btnBakongDeepLink) btnBakongDeepLink.style.display = 'none';
           if (rawKhqrDisplay) rawKhqrDisplay.innerText = `Bitcoin SegWit Address: ${addr}`;
         }
@@ -1499,6 +1553,31 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.error('Failed to generate invoice', e);
     }
+  }
+
+  if (btnTabAba) {
+    btnTabAba.addEventListener('click', () => {
+      if (payMethodSelect) payMethodSelect.value = 'ABA_QR';
+      generatePaymentInvoice();
+    });
+  }
+  if (btnTabAcleda) {
+    btnTabAcleda.addEventListener('click', () => {
+      if (payMethodSelect) payMethodSelect.value = 'ACLEDA_QR';
+      generatePaymentInvoice();
+    });
+  }
+  if (btnTabDynamic) {
+    btnTabDynamic.addEventListener('click', () => {
+      if (payMethodSelect) payMethodSelect.value = 'DYNAMIC_KHQR';
+      generatePaymentInvoice();
+    });
+  }
+  if (btnTabUsdt) {
+    btnTabUsdt.addEventListener('click', () => {
+      if (payMethodSelect) payMethodSelect.value = 'USDT';
+      generatePaymentInvoice();
+    });
   }
 
   if (btnOpenPaymentModal && paymentModal) {

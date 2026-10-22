@@ -876,20 +876,38 @@ return 'HOLD';</textarea>
           </div>
         </div>
 
-        <!-- Step 2: Customer Info & Generate -->
+        <!-- Step 2: Customer Info & Bank Rail Selection -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div class="form-group">
             <label class="form-label" style="font-size: 0.72rem;">Subscriber Name</label>
             <input type="text" id="payCustomerName" class="form-input" value="CEO Lim Penghuot" placeholder="e.g. Lim Penghuot">
           </div>
           <div class="form-group">
-            <label class="form-label" style="font-size: 0.72rem;">Payment Method</label>
+            <label class="form-label" style="font-size: 0.72rem;">Payment Rail & Bank</label>
             <select id="payMethodSelect" class="form-input">
-              <option value="KHQR" selected>🇰🇭 Bakong KHQR (ABA / ACLEDA / Wing)</option>
+              <option value="ABA_QR" selected>🏦 ABA Bank KHQR (CEO Official QR)</option>
+              <option value="ACLEDA_QR">🏦 ACLEDA Bank KHQR (CEO Official QR)</option>
+              <option value="DYNAMIC_KHQR">⚡ Dynamic NBC Bakong Generator</option>
               <option value="USDT">🪙 Crypto USDT (TRC-20 / BEP-20)</option>
               <option value="BTC">₿ Bitcoin (Native SegWit)</option>
             </select>
           </div>
+        </div>
+
+        <!-- Bank Toggle Pills -->
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <button id="btnTabAba" type="button" class="btn-secondary" style="font-size: 0.72rem; padding: 4px 10px; border-color: #00bcd4; color: #00bcd4; background: rgba(0, 188, 212, 0.1);">
+            🏦 ABA Mobile
+          </button>
+          <button id="btnTabAcleda" type="button" class="btn-secondary" style="font-size: 0.72rem; padding: 4px 10px; border-color: rgba(255,255,255,0.1); color: #94a3b8;">
+            🏦 ACLEDA Bank
+          </button>
+          <button id="btnTabDynamic" type="button" class="btn-secondary" style="font-size: 0.72rem; padding: 4px 10px; border-color: rgba(255,255,255,0.1); color: #94a3b8;">
+            ⚡ Dynamic Bakong
+          </button>
+          <button id="btnTabUsdt" type="button" class="btn-secondary" style="font-size: 0.72rem; padding: 4px 10px; border-color: rgba(255,255,255,0.1); color: #94a3b8;">
+            🪙 USDT Crypto
+          </button>
         </div>
 
         <!-- Step 3: Dynamic QR Code Box -->
@@ -905,20 +923,20 @@ return 'HOLD';</textarea>
           </div>
 
           <!-- QR Container -->
-          <div style="background: #ffffff; padding: 12px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; max-width: 210px;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <span style="font-size: 11px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px;">BAKONG</span>
+          <div id="qrImageWrapper" style="background: #ffffff; padding: 10px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; max-width: 260px; max-height: 380px; overflow: hidden;">
+            <div id="qrBankHeader" style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 900; color: #005f73; letter-spacing: 0.5px;">ABA BANK</span>
               <span style="font-size: 9px; font-weight: 800; color: #1e293b; background: #e2e8f0; padding: 1px 4px; border-radius: 2px;">KHQR</span>
             </div>
-            <img id="khqrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=00020101021229240020penghuot_lim%40ababank520459995303840540599.005802KH5916ALPHAFORGE%20QUANT6010PHNOM%20PENH63043E8E" alt="Bakong KHQR Code" style="width: 170px; height: 170px; display: block; border-radius: 4px;" />
+            <img id="khqrImg" src="/images/qr/aba_qr.jpg" alt="Official Bakong KHQR Code" style="width: 100%; max-height: 300px; object-fit: contain; display: block; border-radius: 4px;" />
             <div id="khqrPriceTag" style="margin-top: 6px; font-size: 0.75rem; font-weight: 800; color: #0f172a; font-family: var(--font-mono);">
               $99.00 USD (៛405,000)
             </div>
           </div>
 
           <!-- Bakong Info & Deep Link -->
-          <div style="text-align: center; font-size: 0.72rem; color: #94a3b8; max-width: 440px;">
-            Scan with <b>ABA Mobile</b>, <b>ACLEDA mobile</b>, <b>Wing Bank</b>, or any Bakong-enabled banking app in Cambodia.
+          <div id="qrScanInstructions" style="text-align: center; font-size: 0.72rem; color: #94a3b8; max-width: 440px;">
+            Scan with <b>ABA Mobile</b> or any Bakong-enabled banking app in Cambodia.
           </div>
 
           <!-- Action Buttons -->
