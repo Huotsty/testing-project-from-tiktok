@@ -172,9 +172,16 @@ class Backtester {
         exitReason: 'End of Backtest Period (Mark to Market)'
       });
       position = 0;
+
+      // Reconcile final equity curve point with realized closing fees
+      if (equityCurve.length > 0) {
+        equityCurve[equityCurve.length - 1].equity = Number(cash.toFixed(2));
+        equityCurve[equityCurve.length - 1].cash = Number(cash.toFixed(2));
+        equityCurve[equityCurve.length - 1].positionValue = 0;
+      }
     }
 
-    const finalEquity = equityCurve[equityCurve.length - 1].equity;
+    const finalEquity = equityCurve.length > 0 ? equityCurve[equityCurve.length - 1].equity : cash;
     const totalNetProfit = finalEquity - initialCapital;
     const totalReturnPct = (totalNetProfit / initialCapital) * 100;
 

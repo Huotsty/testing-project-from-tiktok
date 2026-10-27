@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlphaForge — $15 Live Deposit & Setup Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #050811;
+      --bg-secondary: #0a0f1d;
+      --bg-card: rgba(14, 21, 38, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(16, 185, 129, 0.35);
+      --gold: #facc15;
+      --emerald: #10b981;
+      --cyan: #00f0ff;
+      --purple: #c084fc;
+      --danger: #ef4444;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background-color: var(--bg-primary);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
+        linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* Top Sticky Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8, 12, 22, 0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--emerald), var(--cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #040812;
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .brand-tag {
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-back-terminal {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #040812;
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 8px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-back-terminal:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 40px auto 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero */
+    .guide-hero {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08));
+      border: 1.5px solid var(--border-accent);
+      border-radius: 14px;
+      padding: 32px;
+      margin-bottom: 36px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .guide-hero h1 {
+      font-size: 2.1rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #ffffff 0%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .guide-hero p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* Cards */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.2s;
+    }
+
+    .section-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--emerald);
+      color: var(--emerald);
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 13px;
+      margin-right: 10px;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    /* Callout */
+    .callout-alert {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 4px solid var(--danger);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 18px 0;
+      color: #fca5a5;
+      font-size: 0.9rem;
+    }
+
+    .callout-success {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid var(--emerald);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 18px 0;
+      color: #a7f3d0;
+      font-size: 0.9rem;
+    }
+
+    .callout-info {
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 4px solid var(--cyan);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 18px 0;
+      color: #bae6fd;
+      font-size: 0.9rem;
+    }
+
+    /* Steps */
+    ol, ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+      color: #cbd5e1;
+      font-size: 0.92rem;
+    }
+
+    li { margin-bottom: 10px; }
+
+    code {
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.08);
+      color: #38bdf8;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    pre {
+      background: #04060a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      margin: 14px 0;
+    }
+
+    /* Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .mini-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .mini-card h4 {
+      font-size: 0.95rem;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mini-card p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Floating Pill */
+    .floating-back-pill {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #040812;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 12px 22px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 20px rgba(16,185,129,0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s;
+      z-index: 99;
+    }
+
+    .floating-back-pill:hover {
+      transform: translateY(-3px) scale(1.03);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <a href="/" class="brand">
+      <div class="brand-icon">⚡</div>
+      <span class="brand-title">AlphaForge</span>
+      <span class="brand-tag">LIVE MONEY GUIDE</span>
+    </a>
+    <a href="/" class="btn-back-terminal">📊 Back to Trading Terminal</a>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero -->
+    <div class="guide-hero">
+      <h1>$15 Live Deposit & Laptop Setup Guide</h1>
+      <p>
+        Official practical onboarding manual for <b>CEO Lim Penghuot</b>. Step-by-step instructions on funding your personal exchange account, creating your secure API key with zero withdrawal risk, and running the 1-Click Master Auto-Pilot on your laptop with or without a GPU.
+      </p>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">1</span>
+        The Non-Custodial Security Rule
+      </div>
+      <div class="callout-success">
+        <b>ALPHA FORGE NEVER TOUCHES OR HOLDS YOUR MONEY.</b><br>
+        Your trading capital stays 100% inside your own personal, verified account on <b>Binance</b> (or <b>Capital.com</b>). The terminal runs locally on your laptop and only sends encrypted Buy/Sell signals with guaranteed stop-losses. You have full custody and can withdraw your capital at any second.
+      </div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">2</span>
+        How to Deposit $15–$20 into Your Account
+      </div>
+      <p style="font-size: 0.92rem; color: #cbd5e1; margin-bottom: 14px;">
+        To trade live, you need between $10 and $20 in your exchange Spot Wallet. Choose your preferred broker:
+      </p>
+
+      <div class="grid-2">
+        <div class="mini-card" style="border-color: rgba(245, 158, 11, 0.3);">
+          <h4 style="color: #facc15;">🟡 Option A: Binance (Fastest for Crypto & Gold)</h4>
+          <p>
+            1. Open the Binance app.<br>
+            2. Tap <b>Trade ➔ P2P</b>.<br>
+            3. Select <b>USD</b> or <b>KHR</b> and pay with <b>ABA Mobile, ACLEDA, Wing, or Bakong</b>.<br>
+            4. Buy <b>15 to 20 USDT</b> from a verified merchant.<br>
+            5. Ensure the USDT is transferred into your <b>Spot Wallet</b>.
+          </p>
+        </div>
+
+        <div class="mini-card" style="border-color: rgba(56, 189, 248, 0.3);">
+          <h4 style="color: #38bdf8;">🌐 Option B: Capital.com (Spot Gold CFD)</h4>
+          <p>
+            1. Open an account on Capital.com.<br>
+            2. Deposit $20 using your Visa / Mastercard debit card.<br>
+            3. We recommend practicing in <b>Demo Mode</b> first before toggling to Live.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">3</span>
+        Creating Your Secure API Key (The Golden Security Rule)
+      </div>
+
+      <div class="callout-alert">
+        <b>🚨 CRITICAL SECURITY DIRECTIVE:</b><br>
+        In your Binance API Key settings, <b>LEAVE "ENABLE WITHDRAWALS" UNCHECKED / DISABLED!</b><br>
+        By doing this, it is physically impossible for anyone (including AlphaForge or any external hacker) to withdraw your money. The bot can only place spot trades with your stop-loss inside your own account.
+      </div>
+
+      <ol>
+        <li>Log in to Binance ➔ Tap your <b>Profile Icon</b> ➔ Select <b>API Management</b>.</li>
+        <li>Click <b>Create API</b> ➔ Choose <b>System generated API key</b>.</li>
+        <li>Name it: <code>AlphaForge-Bot</code>.</li>
+        <li>Complete your 2-Factor Authentication (Google Auth or SMS).</li>
+        <li>On the API permissions list:
+          <ul style="margin-top:6px;">
+            <li>✅ Check: <b>Enable Reading</b></li>
+            <li>✅ Check: <b>Enable Spot & Margin Trading</b></li>
+            <li>❌ <b>LEAVE UNCHECKED: Enable Withdrawals</b></li>
+          </ul>
+        </li>
+        <li>Copy your <b>API Key</b> and <b>Secret Key</b>.</li>
+      </ol>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">4</span>
+        Connecting Your API Key into AlphaForge
+      </div>
+
+      <ol>
+        <li>Open your AlphaForge terminal in browser: <code>http://localhost:4000</code>.</li>
+        <li>In the top navigation bar, click <b>`💵 Deposit & Real Money`</b> (or the green Real Money button).</li>
+        <li>Under <b>Execution Environment</b>, select <b>`Binance Spot Real`</b> (or <code>Binance Spot Testnet</code> for sandbox testing).</li>
+        <li>Paste your <b>API Key</b> and <b>API Secret</b>.</li>
+        <li>Select your <b>Trade Size</b>: Click the <b>`$15 (75%)`</b> chip.</li>
+        <li>Click <b>`💾 Save Settings`</b>. The terminal confirms: <b style="color:#10b981;">✔ Armed: Capped at $15.00 | Max Loss Strictly $0.30</b>.</li>
+      </ol>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">5</span>
+        Running on Your Laptop (With or Without GPU)
+      </div>
+
+      <div class="callout-info">
+        <b>💡 THE BIG QUESTION: DO YOU NEED A GPU?</b><br>
+        <b>NO! You DO NOT need a GPU to trade live.</b><br>
+        All trading strategies (Master Auto-Pilot, Trend Hunter, Bollinger Reversion, Go HFT Engine, Rust Core, Stop-Loss Shields) run on your normal <b>laptop CPU</b> using less than 3% CPU and ~50MB RAM. Any standard Windows laptop will run it effortlessly.
+      </div>
+
+      <p style="font-size:0.9rem; color:#cbd5e1; margin-top:10px;">
+        <b>What was the GPU for?</b> If your laptop has an NVIDIA GeForce RTX GPU, it accelerates the Kronos deep learning model for 1-millisecond neural candlestick cones. If you do not have an NVIDIA GPU, the system automatically falls back to mathematical indicators (EMA, RSI, Bollinger Bands, ATR) with zero loss of functionality!
+      </p>
+    </div>
+
+    <!-- Section 6 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">6</span>
+        How to Launch the Platform in 2 Clicks
+      </div>
+
+      <div class="grid-2">
+        <div class="mini-card" style="border-color: rgba(16, 185, 129, 0.4);">
+          <h4 style="color: #34d399;">Method A: Web Terminal (Recommended)</h4>
+          <p>
+            1. Double-click: <code>start_terminal.bat</code><br>
+            2. The launcher runs all 30 safety tests and opens <code>http://localhost:4000</code>.<br>
+            3. Click the glowing green button: <b>`⚡ 1-Click Master Auto-Pilot`</b>.<br>
+            4. Done! The bot is autonomously trading Gold & Bitcoin.
+          </p>
+        </div>
+
+        <div class="mini-card" style="border-color: rgba(56, 189, 248, 0.4);">
+          <h4 style="color: #38bdf8;">Method B: Console Auto-Trader HUD</h4>
+          <p>
+            1. Double-click: <code>start_auto_bot.bat</code><br>
+            2. A live command HUD launches, streaming live ticks and executing trades in the background without needing a browser open.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 7 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">7</span>
+        Trade Execution & Safety Shields ($15 Capital)
+      </div>
+
+      <pre>
+[ Market Signal ] ──> [ AI Volatility Gate ] ──> [ Execute Order ($15) ]
+                             │                              │
+                    If Volatility Spike:         ┌──────────┴──────────┐
+                    BLOCKS TRADE (Cash safe)     ▼                     ▼
+                                            TAKE-PROFIT (+4%)    STOP-LOSS (-2%)
+                                            +$0.60 Profit        -$0.30 Max Loss
+                                                 │
+                                       When Profit Hits +1.5%:
+                                       Stop-Loss Moves to +0.5% (LOCKED WINNER)
+      </pre>
+
+      <ul style="margin-top:10px;">
+        <li><b>Winning Trade (+4% on Gold / +5% on BTC):</b> Yields <b>+$0.60 to +$0.75 net profit</b>.</li>
+        <li><b>Losing Trade (-2% Hard Stop-Loss):</b> Capped at strictly <b>-$0.30 maximum loss</b>.</li>
+        <li><b>Dynamic Trailing Lock (+1.5%):</b> Once open profit reaches +$0.22 (+1.5%), the stop-loss is raised to <b>+$0.08 (+0.5%) guaranteed net profit</b>. Green trades never turn red.</li>
+        <li><b>Emergency Circuit Breaker:</b> If daily losses ever reach -$2.00 (10% of $20), trading is automatically halted for 24 hours.</li>
+      </ul>
+    <!-- Section 8 -->
+    <div class="section-card">
+      <div class="card-title">
+        <span class="section-num">8</span>
+        Real-Time Visual Trade Tracking (Just Like Exchange Apps: Binance & TradingView)
+      </div>
+
+      <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.5;">
+        AlphaForge delivers the exact institutional visual interface you expect from premier exchange apps:
+      </p>
+
+      <div class="grid-2" style="margin-top:12px;">
+        <div class="mini-card" style="border-color: rgba(0, 240, 255, 0.4);">
+          <h4 style="color: #00f0ff;">1. Directly on the Candlestick Chart</h4>
+          <p>
+            • <b>⚡ Entry Price Line (Cyan):</b> Horizontal dashed line showing <i>WHERE WE BOUGHT</i> (e.g. <code>⚡ BOUGHT @ $2,685.20</code>).<br>
+            • <b>🛡️ Stop-Loss Line (Red):</b> Drawn at -2.0% below entry.<br>
+            • <b>🎯 Take-Profit Line (Green):</b> Drawn at +4.0% above entry.<br>
+            • <b>Floating P&L Badge & Shading:</b> Live area shading and real-time P&L tag following the live candle tip.<br>
+            • <b>Candlestick Markers:</b> Institutional <code>▲ BUY</code> and <code>▼ SELL</code> badges stamped on the candles.
+          </p>
+        </div>
+
+        <div class="mini-card" style="border-color: rgba(16, 185, 129, 0.4);">
+          <h4 style="color: #34d399;">2. Exchange Blotter Drawer (Under Chart)</h4>
+          <p>
+            • <b>Position Tab:</b> Asset, Side, Quantity, Entry Price ("Where We Bought"), Live Mark Price, Margin ($15), Floating P&L, Stop-Loss, Take-Profit.<br>
+            • <b>1-Click Market Close:</b> <code>[🛑 Market Close]</code> button to liquidate immediately.<br>
+            • <b>Execution Fills Tab:</b> Timestamped immutable ledger of all broker fills with order IDs and trigger reasons.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Back Button -->
+  <a href="/" class="floating-back-pill" title="Return to Live Trading Terminal">
+    <span>📊</span>
+    <span>Back to Live Terminal</span>
+  </a>
+
+</body>
+</html>

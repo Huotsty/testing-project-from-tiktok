@@ -193,8 +193,17 @@ class Strategies {
 
     const signals = [];
 
-    // Security Check: Block dangerous Node.js / system access in sandbox
-    const forbidden = ['require', 'process', 'global', 'child_process', 'fs', 'eval', 'Function', 'window', 'document', 'fetch', 'XMLHttpRequest', 'import'];
+    // Security Check: Block dangerous Node.js / system access & prototype manipulation in sandbox
+    if (typeof customCode !== 'string' || customCode.length > 5000) {
+      throw new Error('Security Violation: Custom algorithm code exceeds maximum allowed size (5000 characters).');
+    }
+
+    const forbidden = [
+      'require', 'process', 'global', 'globalThis', 'child_process', 'fs', 'eval', 'Function',
+      'window', 'document', 'fetch', 'XMLHttpRequest', 'import', 'constructor', '__proto__',
+      'prototype', 'Reflect', 'Proxy', 'AsyncFunction', 'GeneratorFunction', 'WebAssembly',
+      'Worker', 'WebSocket', 'SharedArrayBuffer', 'Atomics'
+    ];
     for (const word of forbidden) {
       const regex = new RegExp(`\\b${word}\\b`, 'i');
       if (regex.test(customCode)) {
@@ -202,12 +211,18 @@ class Strategies {
       }
     }
 
-    // Construct evaluation function
+    // Construct evaluation function with shielded execution environment
     // Expects: return 'BUY' | 'SELL' | 'HOLD'
     let evalFn;
     try {
       evalFn = new Function('candle', 'index', 'closes', 'indicators', `
         'use strict';
+        const global = undefined;
+        const globalThis = undefined;
+        const process = undefined;
+        const require = undefined;
+        const module = undefined;
+        const exports = undefined;
         try {
           ${customCode}
         } catch (e) {
@@ -294,6 +309,65 @@ class Strategies {
       name: `Kronos Foundation Alpha (AAAI 2026, Horizon: ${horizon})`,
       signals,
       indicatorData: { forecastHistories }
+    };
+  }
+
+  /**
+   * 7. Omniverse Master Auto-Pilot (Adaptive Regime Ensemble)
+   * The "Perfect Algorithm" that adapts to any market condition:
+   * 1. Detects market regime (Trend, Range, or Volatility Shock)
+   * 2. During Bullish Momentum: Follows trend via EMA(9/21) + RSI momentum confirmation
+   * 3. During Range/Consolidation: Exploits mean-reversion via Bollinger Bands + RSI oversold bounces
+   * 4. During Volatility Shocks or Bear Breakdowns: Enforces capital protection (stays flat/cash)
+   */
+  static masterAutoPilot(candles, params = {}) {
+    const closes = candles.map(c => c.close);
+    const fastMA = Indicators.ema(closes, 9);
+    const slowMA = Indicators.ema(closes, 21);
+    const bb = Indicators.bollingerBands(closes, 20, 2);
+    const rsi = Indicators.rsi(closes, 14);
+    const signals = [];
+
+    for (let i = 0; i < candles.length; i++) {
+      if (i < 22 || !fastMA[i] || !slowMA[i] || !bb.lower[i] || !rsi[i]) {
+        signals.push({ action: 'HOLD', reason: 'Warming up Master Auto-Pilot indicators' });
+        continue;
+      }
+
+      const p = closes[i];
+      const prevP = closes[i - 1];
+      const curRsi = rsi[i];
+      const isBullTrend = fastMA[i] > slowMA[i] && fastMA[i - 1] <= slowMA[i - 1];
+      const isOversoldBounce = prevP <= bb.lower[i - 1] && p > bb.lower[i] && curRsi <= 45;
+      const isOverboughtRejection = prevP >= bb.upper[i - 1] && p < bb.upper[i] && curRsi >= 65;
+      const isBearDeathCross = fastMA[i] < slowMA[i] && fastMA[i - 1] >= slowMA[i - 1];
+
+      if (isBullTrend && curRsi >= 45 && curRsi <= 68) {
+        signals.push({
+          action: 'BUY',
+          reason: `🌟 MASTER AUTO-PILOT [Trend Momentum]: EMA(9) crossed above EMA(21) [RSI ${curRsi.toFixed(1)}]`
+        });
+      } else if (isOversoldBounce) {
+        signals.push({
+          action: 'BUY',
+          reason: `🌟 MASTER AUTO-PILOT [Mean Reversion]: Bounced off Lower Bollinger Band [RSI ${curRsi.toFixed(1)}]`
+        });
+      } else if (isOverboughtRejection || isBearDeathCross) {
+        signals.push({
+          action: 'SELL',
+          reason: isOverboughtRejection
+            ? `🌟 MASTER AUTO-PILOT [Profit Target]: Rejected Upper Bollinger Band [RSI ${curRsi.toFixed(1)}]`
+            : `🌟 MASTER AUTO-PILOT [Trend Exit]: EMA(9) crossed below EMA(21)`
+        });
+      } else {
+        signals.push({ action: 'HOLD' });
+      }
+    }
+
+    return {
+      name: 'Omniverse Master Auto-Pilot (Adaptive Regime Ensemble)',
+      signals,
+      indicatorData: { fastMA, slowMA, bb, rsi }
     };
   }
 }

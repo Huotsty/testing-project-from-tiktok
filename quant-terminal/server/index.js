@@ -21,9 +21,15 @@ const AutoBotManager = require('./services/autoBotManager');
 const kronosPredictor = require('./core/kronosPredictor');
 
 const PaymentGatewayService = require('./services/paymentGatewayService');
+const SignalCopierService = require('./services/signalCopierService');
 
 const autoBotManager = new AutoBotManager(telegramService);
 const paymentGatewayService = new PaymentGatewayService(telegramService);
+const signalCopierService = new SignalCopierService(realTradingService, telegramService);
+const hftSidecarService = require('./services/hftSidecarService');
+
+// Launch Rust (Port 4060) & Go (Port 4050) Telemetry Sidecars
+hftSidecarService.start();
 
 const tgConfigFile = path.join(__dirname, 'telegram_config.json');
 if (fs.existsSync(tgConfigFile)) {
@@ -38,12 +44,75 @@ if (fs.existsSync(tgConfigFile)) {
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server, path: '/ws' });
+const wss = new WebSocket.Server({ server, path: '/ws', maxPayload: 65536 });
 
 const PORT = process.env.PORT || 4000;
 
-app.use(express.json());
+// Institutional Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+  next();
+});
+
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Primary Health & HFT Engine Status Endpoints
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'UP',
+    service: 'AlphaForge Quant Terminal',
+    port: PORT,
+    rust_engine: 'http://localhost:4060/health',
+    go_engine: 'http://localhost:4050/health',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/rust/health', (req, res) => res.json(hftSidecarService.getRustHealth()));
+app.get('/api/go/health', (req, res) => res.json(hftSidecarService.getGoHealth()));
+
+// Explicit routes to serve the styled Live Deposit & Setup Guide (all variations)
+const guideHtmlPath = path.join(__dirname, '../public/guide.html');
+const guideMdPath = path.join(__dirname, '../LIVE_DEPOSIT_AND_SETUP_GUIDE.md');
+
+const guideRoutes = [
+  '/LIVE_DEPOSIT_AND_SETUP_GUIDE.md',
+  '/LIVE_DEPOSIT_AND_SETUP_GUIDE',
+  '/live_deposit_and_setup_guide.md',
+  '/live_deposit_and_setup_guide',
+  '/guide',
+  '/guide.html',
+  '/deposit-guide',
+  '/setup-guide'
+];
+
+app.get(guideRoutes, (req, res) => {
+  if (req.query.format === 'raw' || (req.headers['accept'] && req.headers['accept'].includes('text/markdown'))) {
+    res.type('text/markdown');
+    return res.sendFile(guideMdPath);
+  }
+  if (fs.existsSync(guideHtmlPath)) {
+    return res.sendFile(guideHtmlPath);
+  }
+  res.type('text/markdown');
+  res.sendFile(guideMdPath);
+});
+
+// Route to serve raw markdown if requested
+app.get('/raw-guide.md', (req, res) => {
+  res.type('text/markdown');
+  res.sendFile(guideMdPath);
+});
+
+// Explicit route for documentation
+app.get(['/DOCUMENTATION.md', '/documentation.md', '/docs'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/docs.html'));
+});
 
 const marketGen = new MarketGenerator();
 telegramService.serverRef = { marketGen, newsService, autoBotManager };
@@ -138,6 +207,8 @@ app.post('/api/backtest', (req, res) => {
       strategyResult = Strategies.macdMomentum(candles, params);
     } else if (strategy === 'kronosFoundationAlpha' || strategy === 'kronosAlpha') {
       strategyResult = Strategies.kronosFoundationAlpha(candles, params);
+    } else if (strategy === 'masterAutoPilot') {
+      strategyResult = Strategies.masterAutoPilot(candles, params);
     } else if (strategy === 'custom') {
       strategyResult = Strategies.customScript(candles, customCode);
     } else {
@@ -344,10 +415,14 @@ app.post('/api/real-trade/config', (req, res) => {
   res.json({ success: true, status });
 });
 
+app.post('/api/real-trade/reset-circuit-breaker', (req, res) => {
+  const status = realTradingService.resetCircuitBreaker();
+  res.json({ success: true, message: 'Circuit breaker reset. Trading restored.', status });
+});
+
 app.post('/api/real-trade/calculate', (req, res) => {
-  const { symbol = 'BTC-USD', capital = 10.00 } = req.body;
+  const { symbol = 'BTC-USD', capital = 10.00, side } = req.body;
   const currentPrice = marketGen.livePrices[symbol] || 65000.00;
-  const calc = realTradingService.calculatePositionSize(currentPrice, capital);
   
   // Algorithmic Signal Evaluation for AUTO direction
   const candles = marketGen.generateHistory(symbol, 50, 15);
@@ -365,7 +440,10 @@ app.post('/api/real-trade/calculate', (req, res) => {
     ? `Bullish Momentum: EMA(9) > EMA(21) [RSI ${curRsi.toFixed(1)}]`
     : `Bearish Drift: EMA(9) < EMA(21) [RSI ${curRsi.toFixed(1)}]`;
 
-  res.json({ success: true, symbol, currentPrice, recommendedSide, signalReason, ...calc });
+  const effectiveSide = (side && side !== 'AUTO') ? side : recommendedSide;
+  const calc = realTradingService.calculatePositionSize(currentPrice, capital, effectiveSide);
+
+  res.json({ success: true, symbol, currentPrice, recommendedSide, effectiveSide, signalReason, ...calc });
 });
 
 app.post('/api/real-trade/order', async (req, res) => {
@@ -390,6 +468,10 @@ app.post('/api/real-trade/order', async (req, res) => {
 
     const ticket = await realTradingService.executeTrade(symbol, side, capital, currentPrice);
 
+    if (!ticket.success) {
+      return res.status(400).json({ success: false, error: ticket.error, ticket });
+    }
+
     // Send instant trade alert via Telegram
     telegramService.sendTradeAlert({
       action: side,
@@ -404,6 +486,38 @@ app.post('/api/real-trade/order', async (req, res) => {
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
+});
+
+// Real-Time Real Money Monitoring & Portfolio Endpoints
+app.get('/api/real-trade/live-portfolio', (req, res) => {
+  res.json(realTradingService.getLivePortfolio());
+});
+
+app.get('/api/real-trade/binance-balance', async (req, res) => {
+  const result = await realTradingService.fetchBinanceBalance();
+  res.json(result);
+});
+
+app.post('/api/real-trade/close-position', async (req, res) => {
+  const { symbol, reason } = req.body || {};
+  if (!symbol) return res.status(400).json({ success: false, error: 'Asset symbol is required' });
+  const result = await realTradingService.closePosition(symbol, reason || 'Manual Close');
+  res.json(result);
+});
+
+app.post('/api/real-trade/emergency-exit', async (req, res) => {
+  const result = await realTradingService.emergencyCloseAll();
+  res.json(result);
+});
+
+// Broadcast Real-Money events directly to all connected WebSockets
+realTradingService.addListener((event) => {
+  const msg = JSON.stringify({ type: 'REAL_MONEY_EVENT', data: event });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(msg);
+    }
+  });
 });
 
 // --- 8. Autonomous Dual-Asset Bot (Gold & BTC) Endpoints ---
@@ -428,6 +542,11 @@ app.post('/api/auto-bot/start', (req, res) => {
     autoBotManager.startAll();
   }
   res.json({ success: true, bots: autoBotManager.getStatus() });
+});
+
+app.post('/api/auto-bot/master-pilot', (req, res) => {
+  const bots = autoBotManager.activateMasterAutoPilot();
+  res.json({ success: true, message: '⚡ 1-Click Master Auto-Pilot Activated Across All Assets', bots });
 });
 
 app.post('/api/auto-bot/stop', (req, res) => {
@@ -543,8 +662,46 @@ app.post('/api/payments/config', (req, res) => {
   res.json({ success: true, config: updated });
 });
 
+// --- 11. External Signal Copier (TradingView Webhook & Telegram Copier) ---
+app.post('/api/signals/webhook', async (req, res) => {
+  try {
+    const symbol = req.body.symbol || 'BTC-USD';
+    const curPrice = marketGen.livePrices[symbol] || null;
+    const result = await signalCopierService.ingestSignal(req.body, curPrice);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/signals/history', (req, res) => {
+  res.json({ success: true, count: signalCopierService.getHistory().length, signals: signalCopierService.getHistory() });
+});
+
+app.get('/api/signals/webhook-info', (req, res) => {
+  const host = req.get('host') || 'localhost:4000';
+  res.json({ success: true, ...signalCopierService.getWebhookTemplate(host) });
+});
+
+app.post('/api/signals/simulate', async (req, res) => {
+  const { symbol = 'BTC-USD', action = 'BUY', source = 'TradingView Pro VIP' } = req.body || {};
+  const curPrice = marketGen.livePrices[symbol] || 68250.00;
+  const result = await signalCopierService.ingestSignal({
+    action,
+    symbol,
+    price: curPrice,
+    source,
+    capital: 10.00
+  }, curPrice);
+  res.json(result);
+});
+
 // Stream real-world ticks directly into terminal
 liveFeedService.onTick((tick) => {
+  hftSidecarService.updatePrice(tick.symbol, tick.price);
   if (feedMode !== 'LIVE_REAL') return;
 
   marketGen.livePrices[tick.symbol] = tick.price;
@@ -585,6 +742,8 @@ liveFeedService.onTick((tick) => {
 
   // Autonomous dual-asset bots tick evaluation
   autoBotManager.onTick(tick.symbol, tick.price, candles);
+  // Real-Money micro-account live mark-to-market evaluation
+  realTradingService.onPriceTick(tick.symbol, tick.price);
 });
 
 // --- WEBSOCKET REAL-TIME TICKER & BOT ENGINE ---
@@ -600,6 +759,12 @@ wss.on('connection', (ws) => {
     entryPrice: 0,
     trades: []
   };
+
+  // Push immediate real-time Real Money Portfolio & Status
+  ws.send(JSON.stringify({
+    type: 'REAL_MONEY_INIT',
+    data: realTradingService.getLivePortfolio()
+  }));
 
   ws.on('message', (msg) => {
     try {
@@ -689,6 +854,8 @@ setInterval(() => {
 
     // Autonomous background bots tick evaluation
     autoBotManager.onTick(symbol, newPrice, candles);
+    realTradingService.onPriceTick(symbol, newPrice);
+    hftSidecarService.updatePrice(symbol, newPrice);
   }
 }, 1000);
 
@@ -845,6 +1012,18 @@ function executeBotSell(client, currentPrice, reason) {
   client.send(JSON.stringify(fillEvent));
   telegramService.sendTradeAlert({ ...fillEvent, symbol: bot.symbol });
 }
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n==============================================================`);
+    console.error(`🚨 PORT OCCUPIED: Port ${PORT} is already in use by an active AlphaForge server.`);
+    console.error(`💡 SOLUTION: Double-clicking start_terminal.bat will now auto-free port ${PORT}`);
+    console.error(`   or open your browser directly at: http://localhost:${PORT}`);
+    console.error(`==============================================================\n`);
+    process.exit(0);
+  }
+  throw err;
+});
 
 server.listen(PORT, () => {
   console.log(`⚡ AlphaForge Quant Terminal running on http://localhost:${PORT}`);

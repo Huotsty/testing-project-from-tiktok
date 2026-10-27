@@ -40,24 +40,31 @@ If you are brand new to trading, coding, and FinTech, follow this exact 4-step p
    - ₿ **Bitcoin (`BTC-USD`)** is driven by crypto liquidity and sentiment. It loves **Mean-Reversion** (buying sharp dips outside Bollinger Bands).
 3. **Automated Bots Don't Guess**: Clicking "Start" does not buy randomly. The bot waits patiently until the mathematical setup triggers, then automatically buys, tracks profits, and exits for you.
 
-### Step 2: Verify the Code Math (19/19 Unit Tests)
+### Step 2: Verify the Code Math (30/30 Unit Tests)
 Before running any trading software, run the automated test suite to prove that every formula and risk guard works:
 ```bash
 npm test
 ```
-*(All 19 tests will run and pass in ~300ms, proving zero math errors, zero divide-by-zero bugs, and guaranteed stop-loss execution).*
+*(All 30 tests will run and pass in ~500ms, proving zero math errors, zero divide-by-zero bugs, dynamic trailing profit lock, signal copier risk shields, and guaranteed stop-loss execution).*
 
 ### Step 3: Run the Autonomous Dual-Asset Bot (1-Click)
 Double-click:
-👉 **[`start_auto_bot.bat`](file:///d:/testing%20the%20project/quant-terminal/start_auto_bot.bat)**  *(or run `npm run bot`)*
+👉 **[`start_auto_bot.bat`](file:///D:/testing%20software%20project/testing-project-from-tiktok/quant-terminal/start_auto_bot.bat)**  *(or run `npm run bot`)*
 
 A live terminal HUD will launch, simultaneously trading **Spot Gold** and **Bitcoin** with live market ticks, automatic buy/sell orders, and risk guards in **100% safe Testnet mode**.
 
-### Step 4: Launch the Full Visual Web Dashboard
+### Step 4: Launch the Full Visual Web Dashboard & 1-Click Auto-Pilot
 Double-click:
-👉 **[`start_terminal.bat`](file:///d:/testing%20the%20project/quant-terminal/start_terminal.bat)**  *(or open http://localhost:4000)*
+👉 **[`start_terminal.bat`](file:///D:/testing%20software%20project/testing-project-from-tiktok/quant-terminal/start_terminal.bat)**  *(or open http://localhost:4000)*
 
-Watch 60 FPS TradingView-style charts, real-time Level 2 Order Books, AI Regime classifications, and push-button manual or algorithmic execution.
+Click **`⚡ ACTIVATE 1-CLICK AUTO-PILOT (DO EVERYTHING FOR ME)`** to engage the multi-regime AI ensemble across Gold and Bitcoin with zero manual intervention.
+
+📖 **Exhaustive System Documentation:**
+* 📘 **[Live Deposit & Laptop Setup Guide ($15 Micro-Sandbox)](LIVE_DEPOSIT_AND_SETUP_GUIDE.md)** *(Start Here for Live Funds)*
+* 🏛️ [Distributed Architecture & Scalability Manual](ARCHITECTURE.md)
+* 📘 [Institutional Whitepaper & Platform Guide](DOCUMENTATION.md)
+* 🛡️ [Software Engineering Standards](SOFTWARE_ENGINEERING_STANDARDS.md)
+* 🧠 [Zero-to-Hero Master Quant Journal](ZERO_TO_HERO_MASTER_JOURNAL.md)
 
 ---
 

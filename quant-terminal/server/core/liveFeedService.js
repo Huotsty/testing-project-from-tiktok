@@ -57,20 +57,21 @@ class LiveFeedService {
 
     this.ws.on('message', (data) => {
       try {
-        const msg = JSON.parse(data);
-        // Payload format: { s: 'PAXGUSDT', p: '2684.50', q: '0.15', T: 1729000000 }
-        const streamSymbol = (msg.s || '').toLowerCase();
+        const raw = JSON.parse(data);
+        // Binance returns { stream: "...", data: {...} } on combined streams, or raw {...} on direct streams
+        const payload = raw.data || raw;
+        const streamSymbol = (payload.s || '').toLowerCase();
         const appSymbol = this.reverseMap[streamSymbol];
 
-        if (appSymbol) {
-          const livePrice = Number(parseFloat(msg.p).toFixed(2));
+        if (appSymbol && payload.p) {
+          const livePrice = Number(parseFloat(payload.p).toFixed(2));
           this.latestPrices[appSymbol] = livePrice;
 
           const tickEvent = {
             symbol: appSymbol,
             price: livePrice,
-            volume: parseFloat(msg.q),
-            timestamp: msg.T || Date.now(),
+            volume: parseFloat(payload.q || 0),
+            timestamp: payload.T || raw.E || Date.now(),
             isLiveExchange: true
           };
 

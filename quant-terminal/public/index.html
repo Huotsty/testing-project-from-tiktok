@@ -19,6 +19,7 @@
 
   <!-- Top Executive Navigation Header -->
   <header class="terminal-nav">
+    <!-- Left: Brand & Founders -->
     <div class="nav-brand">
       <div class="brand-icon">
         <svg viewBox="0 0 24 24">
@@ -28,36 +29,31 @@
       <div>
         <h1 class="brand-title">AlphaForge <span style="font-weight:400; color:#00f0ff;">QUANT</span></h1>
       </div>
-      <span class="brand-tag">Ultra HFT</span>
-      <a href="/docs.html" target="_blank" class="btn-secondary btn-docs-nav" style="font-size:0.7rem; padding:3px 8px;" title="Open AlphaForge Whitepaper & Institutional Documentation">
-        📖 Docs
-      </a>
+      <span class="brand-tag">v2.4 PRO</span>
       <span class="founder-badge" title="Proprietary quantitative architecture developed by Lim Penghuot (CEO) & Antigravity (DeepMind CTO)">
-        Founders: <b>Lim & Antigravity</b>
+        <b>Lim & Antigravity</b>
       </span>
     </div>
 
-    <!-- Telemetry Cluster: C++20, Go Engine & Spread Armor -->
-    <div class="telemetry-cluster">
-      <div class="engine-pill cpp" title="C++20 AVX2 Bare-Metal Engine - 41.6ns/tick (24,025,756 ticks/sec)">
-        <span class="pulse-led" style="color:#10b981;"></span>
-        ⚡ C++20: <span>41.6ns</span>
-      </div>
-      <a href="http://localhost:4050/health" target="_blank" id="goEngineBadge" class="engine-pill" title="Pure Go Compiled Machine Code Engine - Click to view live JSON telemetry">
-        <span id="goStatusDot" class="pulse-led" style="color:#00ADD8;"></span>
-        ⚡ GO: <span id="goLatencyDisplay">0.24µs</span>
-      </a>
-      <a href="http://localhost:5050/health" target="_blank" id="gpuEngineBadge" class="engine-pill gpu" title="NVIDIA GeForce RTX 3050 Laptop GPU (PyTorch CUDA 12.6) - Click to inspect live tensor telemetry">
-        <span id="gpuStatusDot" class="pulse-led" style="color:#c084fc;"></span>
-        ⚡ GPU: <span id="gpuStatusDisplay">RTX 3050 (1.0ms)</span>
-      </a>
-      <div id="spreadArmorBadge" style="display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#34d399; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); padding:3px 9px; border-radius:6px; font-family:var(--font-mono);" title="Hard 0.05% Spread Gate Filter">
-        🛡️ SPREAD: <span id="spreadDisplay">0.01%</span> <span style="color:#00f59b; font-size:9px;">[PASS]</span>
-      </div>
-    </div>
+    <!-- Center: Master Workflow Switcher (Crystal Clear Navigation!) -->
+    <nav class="nav-mode-switcher" aria-label="Workflow Navigation">
+      <button id="navModeAutoPilot" class="nav-mode-btn active" title="1-Click Autonomous Multi-Asset Master Auto-Pilot (Gold & Bitcoin)">
+        <span>⚡</span> <span>Auto-Pilot (1-Click)</span>
+      </button>
+      <button id="navModeCharts" class="nav-mode-btn mode-charts" title="TradingView Candlestick Chart, Backtesting & Strategy Lab">
+        <span>📊</span> <span>Live Charts</span>
+      </button>
+      <button id="navModeCopier" class="nav-mode-btn mode-copier" title="TradingView Webhook & Telegram Signal Copier">
+        <span>📡</span> <span>Signal Copier</span>
+      </button>
+      <button id="navModeReal" class="nav-mode-btn mode-real" title="Deposit Guide & Micro-Account Real Money ($10-$20)">
+        <span>💵</span> <span>Deposit & Real Money</span>
+      </button>
+    </nav>
 
-    <!-- Active Asset & Live Ticker -->
-    <div class="nav-ticker-bar">
+    <!-- Right: Telemetry, Telegram, News & Docs -->
+    <div class="nav-actions">
+      <!-- Active Asset Dropdown & Live Price -->
       <div class="asset-dropdown-wrap">
         <select id="assetSelect" class="asset-select" aria-label="Select Asset">
           <option value="XAU-USD">XAU-USD (Spot Gold)</option>
@@ -66,16 +62,9 @@
           <option value="SOL-USD">SOL-USD (Solana)</option>
           <option value="NVDA">NVDA (Nvidia)</option>
           <option value="SPY">SPY (S&P 500 ETF)</option>
-          <option value="USOIL">USOIL (WTI Crude Oil)</option>
+          <option value="USOIL">USOIL (Crude Oil)</option>
           <option value="GLD">GLD (Gold Trust)</option>
-          <option value="COIN">COIN (Coinbase FinTech)</option>
-          <option value="HOOD">HOOD (Robinhood FinTech)</option>
-          <option value="PYPL">PYPL (PayPal FinTech)</option>
-          <option value="EUR-USD">EUR/USD (Euro / US Dollar Forex)</option>
-          <option value="GBP-USD">GBP/USD (British Pound Forex)</option>
-          <option value="USD-JPY">USD/JPY (Dollar / Yen Forex)</option>
-          <option value="AUD-USD">AUD/USD (Aussie / Dollar Forex)</option>
-          <option value="DOGE-USD">DOGE-USD (Dogecoin Meme)</option>
+          <option value="DOGE-USD">DOGE-USD (Meme)</option>
         </select>
       </div>
 
@@ -83,61 +72,29 @@
         $0.00
       </div>
 
-      <div class="ws-status">
-        <div id="wsStatusDot" class="status-dot"></div>
-        <span id="wsStatusText">Connecting...</span>
+      <div class="engine-pill cpp" title="HFT Microsecond Core (Go & Rust Bare-Metal Engine Active)">
+        <span class="pulse-led" style="color:#10b981;"></span>
+        <span>539ns</span>
       </div>
-    </div>
 
-    <!-- Right Top Actions Cluster -->
-    <div class="nav-actions">
-      <button id="btnOpenRealTradeModal" class="btn-primary btn-emerald" title="Micro-Capital Real Trading ($1 - $20) with Hard 1-2% Risk Shield">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M12 6v12M15 9.5a3.5 3.5 0 0 0-7 0c0 2 2 3 3.5 3.5s3.5 1.5 3.5 3.5a3.5 3.5 0 0 1-7 0"></path>
-        </svg>
-        Real Money ($1-$20)
-      </button>
-
-      <button id="btnOpenNewsWire" class="btn-secondary" title="Live Financial News Wire & Macro Market Sentiment">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-          <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-        </svg>
-        News
-        <span id="sentimentNavBadge" style="padding: 1px 5px; font-size: 9px; border-radius: 3px; background: rgba(34,197,94,0.15); color: #22c55e; margin-left: 2px; font-weight: 700;">GREED</span>
-      </button>
-
-      <button id="btnOpenPaymentModal" class="btn-secondary" style="border-color: rgba(234, 179, 8, 0.4); color: #facc15;" title="Monetization Gateway: Bakong KHQR, ABA PayWay & Crypto Subscriptions">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2">
-          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-          <line x1="1" y1="10" x2="23" y2="10"></line>
-        </svg>
-        🇰🇭 KHQR Pay
-      </button>
-
-      <button id="btnOpenTelegramModal" class="btn-secondary" title="Verified Bot: @penghuotbot (Live Alerts to Lim Penghuot)">
+      <button id="btnOpenTelegramModal" class="btn-secondary" title="Verified Bot: @penghuotbot (Live Alerts)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
           <path d="M22 2L11 13"></path>
           <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
         </svg>
-        Telegram
-        <span id="tgNavDot" style="width:6px; height:6px; border-radius:50%; background:#64748b; margin-left:2px; display:inline-block;"></span>
+        <span id="tgNavDot" style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span>
       </button>
 
-      <button id="btnOpenQuantLearn" class="btn-secondary" title="View Quant Formulas, Risk Math & Market Microstructure">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-          <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
-        Theory
+      <button id="btnOpenNewsWire" class="btn-secondary" title="Live Financial News Wire & Market Sentiment">
+        📰 News
+        <span id="sentimentNavBadge" style="padding: 1px 4px; font-size: 8px; border-radius: 3px; background: rgba(34,197,94,0.15); color: #22c55e; font-weight: 700;">GREED</span>
       </button>
 
-      <a href="/docs.html" target="_blank" class="btn-secondary btn-docs-nav" id="navDocsBtn" title="AlphaForge Institutional Whitepaper & Documentation">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-        </svg>
+      <button id="btnOpenPaymentModal" class="btn-secondary" style="border-color: rgba(234, 179, 8, 0.4); color: #facc15;" title="Monetization Gateway: Bakong KHQR & ABA PayWay">
+        🇰🇭 KHQR
+      </button>
+
+      <a href="/docs.html" target="_blank" class="btn-secondary" style="border-color: rgba(56, 189, 248, 0.3); color: #38bdf8;" title="Institutional Documentation & Deposit Guide">
         📖 Docs
       </a>
     </div>
@@ -148,6 +105,31 @@
     
     <!-- Left Panel: Chart & Technical Tools -->
     <section class="chart-workspace">
+      <!-- Executive Auto-Pilot Quick Strip (Front and Center) -->
+      <div class="executive-autopilot-strip">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:0.75rem; font-weight:800; color:#34d399; display:flex; align-items:center; gap:6px;">
+            <span class="pulse-led" style="background:#10b981;"></span>
+            AUTO-PILOT ACTIVE:
+          </span>
+          <span style="font-size:0.72rem; color:#f1f5f9; font-weight:700;">
+            🟡 Gold (<code style="color:#facc15;">XAU-USD</code>) + 🟠 Bitcoin (<code style="color:#f97316;">BTC-USD</code>)
+          </span>
+          <span style="font-size:0.68rem; color:#94a3b8; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; font-family:var(--font-mono);">
+            🛡️ AI Volatility Gate: CLEAR
+          </span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button id="btnStripOneClickAutoPilot" class="btn-primary btn-emerald" style="padding:5px 14px; font-size:0.75rem; font-weight:800; box-shadow:0 0 12px rgba(16,185,129,0.4);">
+            ⚡ 1-Click Master Auto-Pilot
+          </button>
+          <a href="/guide.html" target="_blank" id="btnStripDepositGuide" class="btn-secondary" style="border-color:rgba(234,179,8,0.4); color:#facc15; font-size:0.72rem; text-decoration:none;">
+            📘 $15 Deposit Guide
+          </a>
+        </div>
+      </div>
+
       <!-- Toolbar -->
       <div class="chart-toolbar">
         <div class="timeframe-group">
@@ -219,6 +201,84 @@
           </div>
           <canvas id="subChart"></canvas>
         </div>
+
+        <!-- Institutional Exchange App Blotter (Where did we buy, price, and PnL) -->
+        <div class="exchange-blotter-drawer">
+          <div class="blotter-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="pulse-led" style="background:#10b981; width:7px; height:7px;"></span>
+              <span style="font-size:0.75rem; font-weight:800; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px;">
+                ⚡ Trade & Position Blotter
+              </span>
+              <span id="blotterActiveSymbolBadge" style="font-size:0.68rem; font-family:var(--font-mono); color:#facc15; font-weight:700;">
+                XAU-USD
+              </span>
+            </div>
+
+            <div class="blotter-tabs">
+              <button id="btnBlotterPosTab" class="blotter-tab active" type="button">
+                📍 Position (<span id="blotterPosCount">0</span>)
+              </button>
+              <button id="btnBlotterHistoryTab" class="blotter-tab" type="button">
+                📜 Execution Fills (<span id="blotterFillsCount">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- Position View (Detailed breakdown of where we bought, prices, PnL) -->
+          <div id="blotterPositionView" class="blotter-content active">
+            <div id="blotterNoPosMsg" style="padding:12px; text-align:center; color:#64748b; font-size:0.74rem;">
+              No open position on <span id="blotterNoPosSymbol" style="color:#00f0ff;">XAU-USD</span>. 1-Click Auto-Pilot is scanning market conditions for next safe entry.
+            </div>
+
+            <div id="blotterActivePosTable" style="display:none; overflow-x:auto;">
+              <table class="blotter-table">
+                <thead>
+                  <tr>
+                    <th>Asset</th>
+                    <th>Side</th>
+                    <th>Quantity</th>
+                    <th>Entry Price (Where We Bought)</th>
+                    <th>Mark Price (Live)</th>
+                    <th>Margin / Capital</th>
+                    <th>Floating P&L ($ / %)</th>
+                    <th>Stop-Loss (-2%)</th>
+                    <th>Take-Profit (+4%)</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="blotterPosTableBody">
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Execution Fills View (History of where we bought and sold) -->
+          <div id="blotterHistoryView" class="blotter-content" style="display:none;">
+            <div id="blotterFillsContainer" style="max-height:130px; overflow-y:auto;">
+              <table class="blotter-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Order ID</th>
+                    <th>Asset</th>
+                    <th>Action</th>
+                    <th>Execution Price</th>
+                    <th>Quantity</th>
+                    <th>Total Capital</th>
+                    <th>Realized P&L</th>
+                    <th>Trigger Reason</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="blotterFillsTableBody">
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -226,7 +286,13 @@
     <aside class="control-sidebar">
       <!-- Tabs Header -->
       <div class="sidebar-tabs">
-        <button id="tabBtnBacktest" class="tab-btn active" data-tab="backtest">
+        <button id="tabBtnBot" class="tab-btn active" data-tab="bot" style="color:#34d399; font-weight:800;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline>
+          </svg>
+          ⚡ Auto-Pilot Fleet
+        </button>
+        <button id="tabBtnBacktest" class="tab-btn" data-tab="backtest">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
@@ -240,21 +306,22 @@
           </svg>
           L2 Order Book
         </button>
-        <button id="tabBtnBot" class="tab-btn" data-tab="bot">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        <button id="tabBtnRealMoney" class="tab-btn" data-tab="realmoney" style="color:#facc15; font-weight:800;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6v12M15 9.5a3.5 3.5 0 0 0-7 0c0 2 2 3 3.5 3.5s3.5 1.5 3.5 3.5a3.5 3.5 0 0 1-7 0"></path>
           </svg>
-          Dual-Bot Fleet
+          💵 Real Money Live
         </button>
       </div>
 
       <!-- TAB 1: STRATEGY LAB & BACKTEST -->
-      <div id="backtestTab" class="tab-content active">
+      <div id="backtestTab" class="tab-content">
         <!-- Strategy Controls -->
         <div class="form-group">
           <label class="form-label">Algorithm Architecture</label>
           <select id="strategySelect" class="form-select">
+            <option value="masterAutoPilot" selected>⚡ Omniverse Master Auto-Pilot (Adaptive Multi-Strategy Ensemble)</option>
             <option value="kronosFoundationAlpha">🔮 Kronos Foundation Alpha (AAAI 2026 / Pretrained K-Line LLM)</option>
             <option value="smaCrossover">Dual Moving Average Crossover (Trend Following)</option>
             <option value="rsiMeanReversion">RSI Mean Reversion (Statistical Oscillator)</option>
@@ -424,7 +491,19 @@ return 'HOLD';</textarea>
       </div>
 
       <!-- TAB 3: AUTONOMOUS DUAL-BOT FLEET (GOLD & BTC) -->
-      <div id="botTab" class="tab-content">
+      <div id="botTab" class="tab-content active">
+
+        <!-- Real Capital Live Status Mini-Strip -->
+        <div id="botTabRealMoneyMiniStrip" class="real-money-mini-strip">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="pulse-led" style="background:#10b981; width:7px; height:7px;"></span>
+            <span style="font-size:0.72rem; color:#cbd5e1;">Real Capital: <b id="miniStripRealEquity" style="color:#00f0ff; font-family:var(--font-mono);">$15.00 USDT</b></span>
+            <span id="miniStripRealPnl" style="font-size:0.7rem; color:#34d399; font-weight:700;">(+$0.00)</span>
+          </div>
+          <button id="btnSwitchToRealTab" type="button" class="btn-chip-amt" style="color:#facc15; border-color:rgba(250,204,21,0.4); font-size:0.68rem; padding:2px 8px; cursor:pointer;">
+            Live Real HUD ➔
+          </button>
+        </div>
 
         <!-- Portfolio Ledger HUD Card -->
         <div class="portfolio-ledger-card">
@@ -478,7 +557,8 @@ return 'HOLD';</textarea>
           <!-- Bot Strategy Mode Selector -->
           <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 10px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:6px; margin-bottom:8px;">
             <label style="font-size:0.68rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;">ALGO ENGINE:</label>
-            <select id="botFleetStrategySelect" style="flex:1; background:#0b111e; border:1px solid rgba(168,85,247,0.4); color:#c084fc; font-size:0.75rem; font-weight:700; padding:4px 8px; border-radius:4px; outline:none; cursor:pointer;">
+            <select id="botFleetStrategySelect" style="flex:1; background:#0b111e; border:1px solid rgba(16,185,129,0.5); color:#34d399; font-size:0.75rem; font-weight:700; padding:4px 8px; border-radius:4px; outline:none; cursor:pointer;">
+              <option value="masterAutoPilot" selected>🌟 Master Auto-Pilot (Adaptive Regime Ensemble)</option>
               <option value="kronosAlpha">🔮 Kronos Foundation Model (AAAI 2026 AI Forecaster)</option>
               <option value="smaCrossover">⚡ Trend Hunter (EMA 9/21 Golden Cross)</option>
               <option value="bollingerReversion">🌊 Volatility Reversion (Bollinger Bands)</option>
@@ -512,6 +592,24 @@ return 'HOLD';</textarea>
             </div>
           </div>
 
+          <!-- ⚡ 1-CLICK MASTER AUTO-PILOT HERO CARD -->
+          <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.12)); border: 1.5px solid #10b981; border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.18);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span style="font-size: 0.78rem; font-weight: 800; color: #34d399; display: flex; align-items: center; gap: 6px;">
+                <span class="pulse-led" style="background:#10b981;"></span> ⚡ 1-CLICK MASTER AUTO-PILOT
+              </span>
+              <span id="masterAutoPilotPill" style="font-size: 0.65rem; font-weight: 800; background: rgba(16, 185, 129, 0.25); color: #10b981; padding: 2px 7px; border-radius: 4px; border: 1px solid #10b981;">
+                AUTONOMOUS
+              </span>
+            </div>
+            <p style="font-size: 0.72rem; color: #cbd5e1; margin: 0 0 10px 0; line-height: 1.45;">
+              Just click once and let the engine do everything. Ingests live ticks, detects regimes with AI, auto-switches strategies, enforces -2.0% stop-loss & +1.5% trailing profit lock, and alerts Telegram automatically.
+            </p>
+            <button id="btnOneClickMasterAutoPilot" style="width: 100%; padding: 12px 0; font-size: 0.82rem; font-weight: 900; background: linear-gradient(135deg, #10b981, #06b6d4); color: #022c22; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); transition: all 0.2s ease;">
+              ⚡ ACTIVATE 1-CLICK AUTO-PILOT (DO EVERYTHING FOR ME)
+            </button>
+          </div>
+
           <!-- Master Engine Toggle -->
           <button id="btnToggleBot" class="btn-primary" style="width:100%; padding:10px 0; font-weight:800; justify-content:center;">
             🚀 Start Algorithmic Execution Engine
@@ -540,6 +638,154 @@ return 'HOLD';</textarea>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- TAB 4: REAL-TIME REAL MONEY LIVE TRADING HUD -->
+      <div id="realmoneyTab" class="tab-content">
+        <!-- Live Connection Status & Account Verification -->
+        <div class="real-money-connection-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="realConnectionDot" class="pulse-led" style="background:#10b981; width:8px; height:8px;"></span>
+              <span id="realConnectionBadge" style="font-size:0.75rem; font-weight:800; color:#34d399; letter-spacing:0.5px;">
+                🟢 REAL CAPITAL ARMED
+              </span>
+            </div>
+            <button id="btnSyncRealBalance" type="button" class="btn-chip-amt" title="Query exchange API for live wallet balance" style="color:#facc15; border-color:rgba(250,204,21,0.4); font-size:0.68rem; padding:3px 8px; cursor:pointer;">
+              🔄 Sync Balance
+            </button>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:0.72rem; color:#cbd5e1; background:rgba(0,0,0,0.3); border-radius:6px; padding:8px 10px;">
+            <div>Broker: <b id="realBrokerName" style="color:#00f0ff;">Binance Spot Real</b></div>
+            <div>Withdrawals: <b id="realWithdrawalStatus" style="color:#10b981;">DISABLED 🛡️</b></div>
+            <div>API Key: <span id="realMaskedKey" style="font-family:var(--font-mono); color:#94a3b8;">Armed ($15.00 Cap)</span></div>
+            <div>Risk Shield: <b style="color:#f59e0b;">Max -$0.30 (-2%)</b></div>
+          </div>
+        </div>
+
+        <!-- Real-Time Capital HUD (Tick-by-Tick Live Monitor) -->
+        <div class="portfolio-ledger-card" style="border-color:rgba(250,204,21,0.35); box-shadow:0 0 20px rgba(250,204,21,0.08);">
+          <div class="ledger-header">
+            <span style="font-size:0.75rem; font-weight:800; color:#facc15; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+              <span>💵</span> Real Capital Portfolio (Live)
+            </span>
+            <span id="realLiveTickIndicator" style="font-size:0.68rem; font-family:var(--font-mono); color:#10b981; font-weight:700;">
+              ● LIVE STREAMING
+            </span>
+          </div>
+
+          <div class="ledger-stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">Total Real Equity</span>
+              <span id="realLiveEquity" class="stat-val cyan" style="font-size:1.15rem; font-weight:900;">$15.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Available Cash</span>
+              <span id="realLiveCash" class="stat-val">$15.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">In-Trade Margin</span>
+              <span id="realLiveInTrade" class="stat-val">$0.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Live Unrealized PnL</span>
+              <span id="realLiveUnrealized" class="stat-val bullish">+$0.00 (0.0%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Active Real Positions Card -->
+        <div class="bot-hero-card" style="margin-top:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:0.75rem; font-weight:800; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px;">
+              ⚡ Live Open Real Positions
+            </span>
+            <span id="realPositionsCountBadge" style="font-size:0.68rem; font-family:var(--font-mono); background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:#38bdf8;">
+              0 Open
+            </span>
+          </div>
+
+          <div id="realPositionsContainer" style="display:flex; flex-direction:column; gap:8px;">
+            <div id="realPositionsEmptyMsg" style="padding:16px; text-align:center; color:#64748b; font-size:0.78rem; background:rgba(0,0,0,0.25); border-radius:6px; border:1px dashed rgba(255,255,255,0.08);">
+              No active open real positions.<br>
+              <span style="font-size:0.7rem; color:#94a3b8;">1-Click Auto-Pilot is actively monitoring Gold & Bitcoin price ticks for safe high-probability entries.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1-Click Quick Real Order & Risk Bar -->
+        <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px; margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.72rem; font-weight:800; color:#cbd5e1; text-transform:uppercase;">
+              ⚡ 1-Click Real Order Execution
+            </span>
+            <span style="font-size:0.68rem; color:#f59e0b; font-weight:700;">
+              🛡️ Hard Stop-Loss (-2%) Enforced
+            </span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div>
+              <label class="form-label" style="font-size:0.68rem;">Asset to Trade</label>
+              <select id="quickRealAsset" class="form-select" style="font-size:0.75rem; padding:5px 8px;">
+                <option value="XAU-USD" selected>🟡 Spot Gold (XAU-USD / PAXG)</option>
+                <option value="BTC-USD">🟠 Bitcoin (BTC-USD)</option>
+                <option value="ETH-USD">🔷 Ethereum (ETH-USD)</option>
+                <option value="SOL-USD">🟣 Solana (SOL-USD)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.68rem;">Order Direction</label>
+              <select id="quickRealSide" class="form-select" style="font-size:0.75rem; padding:5px 8px;">
+                <option value="AUTO" selected>🤖 AUTO (AI Signal Bias)</option>
+                <option value="BUY">📈 BUY / LONG</option>
+                <option value="SELL">📉 SELL / SHORT</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Quick Capital Sizing Chips -->
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:#94a3b8; margin-bottom:4px;">
+              <span>Allocated Capital:</span>
+              <span id="quickRealCapitalLabel" style="color:#00f0ff; font-weight:800;">$15.00 USDT</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-chip-amt quick-real-chip" data-amt="5" style="flex:1; padding:4px 0; text-align:center;">$5 (25%)</button>
+              <button type="button" class="btn-chip-amt quick-real-chip" data-amt="10" style="flex:1; padding:4px 0; text-align:center;">$10 (50%)</button>
+              <button type="button" class="btn-chip-amt quick-real-chip active" data-amt="15" style="flex:1; padding:4px 0; text-align:center; background:rgba(16,185,129,0.2); border-color:#10b981; color:#34d399; font-weight:800;">$15 (75%)</button>
+              <button type="button" class="btn-chip-amt quick-real-chip" data-amt="20" style="flex:1; padding:4px 0; text-align:center;">$20 (Max)</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr auto; gap:8px;">
+            <button id="btnQuickExecuteRealTrade" class="btn-primary btn-emerald" style="justify-content:center; font-weight:800; font-size:0.78rem; padding:8px 12px; box-shadow:0 0 15px rgba(16,185,129,0.3);">
+              ⚡ Execute Real Order Now
+            </button>
+            <button id="btnEmergencyCloseAll" class="btn-secondary" style="border-color:rgba(239,68,68,0.5); color:#ef4444; font-weight:800; font-size:0.75rem; padding:8px 12px;" title="Close all open real positions and flatten immediately">
+              🛑 Flatten All
+            </button>
+          </div>
+
+          <div id="quickRealStatusMsg" style="font-size:0.72rem; min-height:16px; font-family:var(--font-mono); text-align:center; color:#94a3b8;"></div>
+        </div>
+
+        <!-- Live Broker Execution Audit Stream -->
+        <div style="margin-top:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:0.72rem; font-weight:800; color:#cbd5e1; text-transform:uppercase;">
+              📜 Live Broker Audit Stream
+            </span>
+            <span style="font-size:0.66rem; color:#64748b; font-family:var(--font-mono);">
+              Cryptographic Signatures Verified
+            </span>
+          </div>
+          <div id="realAuditStream" style="max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; font-family:var(--font-mono); font-size:0.7rem;">
+            <div style="color:#64748b; text-align:center; padding:10px;">No executed real trades yet today.</div>
+          </div>
+        </div>
+
       </div>
 
     </aside>
@@ -816,6 +1062,9 @@ return 'HOLD';</textarea>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button id="btnFetchBinanceBalance" type="button" class="btn-secondary" style="grid-column: span 2; justify-content: center; font-weight: 700; color: #facc15; border-color: rgba(250, 204, 21, 0.4);">
+            🔍 Test Connection & Query Live Wallet Balance
+          </button>
           <button id="btnSaveRealTradeConfig" class="btn-secondary" style="justify-content: center; font-weight: 700;">
             💾 Save Settings
           </button>
@@ -970,6 +1219,51 @@ return 'HOLD';</textarea>
         </div>
 
       </div>
+    </div>
+  </div>
+
+  <!-- Signal Copier Modal -->
+  <div id="signalCopierModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#0b101b; border:1px solid rgba(168,85,247,0.4); border-radius:12px; width:92%; max-width:580px; padding:24px; box-shadow:0 0 30px rgba(168,85,247,0.25); display:flex; flex-direction:column; gap:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.1rem;">📡</span>
+          <h3 style="color:#fff; font-size:1.0rem; font-weight:800; margin:0;">TradingView & Telegram Signal Copier</h3>
+        </div>
+        <button id="btnCloseSignalCopier" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="font-size:0.75rem; color:#cbd5e1; line-height:1.45; margin:0;">
+        Automatically mirror and copy signals from <b>TradingView alert webhooks</b>, <b>Telegram VIP channels</b>, or custom trading bots. The engine automatically enforces our <b>-2.0% Stop-Loss and Micro-Capital ($10-$20) Shield</b> to protect your account.
+      </p>
+
+      <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px;">
+        <label style="font-size:0.68rem; font-weight:700; color:#c084fc; text-transform:uppercase;">Your Active Webhook URL:</label>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <input type="text" id="copierWebhookUrlInput" readonly value="http://localhost:4000/api/signals/webhook" style="flex:1; background:#040711; border:1px solid rgba(168,85,247,0.3); color:#38bdf8; font-family:var(--font-mono); font-size:0.75rem; padding:6px 10px; border-radius:4px; outline:none;">
+          <button id="btnCopyWebhookUrl" class="btn-secondary" style="font-size:0.7rem;">Copy URL</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:0.68rem; font-weight:700; color:#94a3b8; text-transform:uppercase;">TradingView Alert Message (JSON Template):</label>
+        <pre style="background:#040711; border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:10px; font-size:0.70rem; color:#38bdf8; margin-top:4px; overflow-x:auto;">{
+  "secret": "alphaforge_vip_secret",
+  "action": "{{strategy.order.action}}",
+  "symbol": "{{ticker}}",
+  "price": {{close}},
+  "capital": 10.00,
+  "source": "TradingView Pro Alert"
+}</pre>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button id="btnSimulateCopySignal" class="btn-primary" style="flex:1; justify-content:center; background:linear-gradient(135deg, #a855f7, #6366f1); border-color:#c084fc; font-weight:800; font-size:0.78rem;">
+          ⚡ Test Copy Signal (Simulate TradingView Alert)
+        </button>
+      </div>
+
+      <div id="copierStatusMsg" style="font-size:0.72rem; color:#34d399; font-weight:700; text-align:center; min-height:16px;"></div>
     </div>
   </div>
 

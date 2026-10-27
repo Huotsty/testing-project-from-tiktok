@@ -1,0 +1,22 @@
+[package]
+name = "alphaforge-rust-engine"
+version = "1.0.0"
+edition = "2021"
+authors = ["CEO Lim Penghuot", "CTO Antigravity (Google DeepMind)"]
+description = "Institutional Ultra-HFT Quant Engine in Rust with Zero-Allocation Risk Shield"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = { version = "0.21", features = ["native-tls"] }
+futures-util = "0.3"
+warp = "0.3"
+chrono = "0.4"
+url = "2.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

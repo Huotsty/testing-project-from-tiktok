@@ -20,5 +20,9 @@ Thumbs.db
 telegram_config.json
 real_trade_config.json
 server/telegram_config.json
+server/real_trade_config.json
 bot_ledger.json
 server/bot_ledger.json
+*.json.bak
+*.json.backup
+*.db

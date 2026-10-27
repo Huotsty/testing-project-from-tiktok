@@ -30,6 +30,8 @@ class AutoBotManager {
         entryPrice: 0,
         stopLossPct: 2.0,      // Hard stop at -2%
         takeProfitPct: 4.0,    // Target profit at +4%
+        trailingLocked: false,
+        trailingLockPrice: 0,
         aiFilterEnabled: true,
         trades: [],
         realizedPnL: 0,
@@ -51,6 +53,8 @@ class AutoBotManager {
         entryPrice: 0,
         stopLossPct: 2.0,      // Hard stop at -2%
         takeProfitPct: 5.0,    // Target profit at +5%
+        trailingLocked: false,
+        trailingLockPrice: 0,
         aiFilterEnabled: true,
         trades: [],
         realizedPnL: 0,
@@ -165,6 +169,20 @@ class AutoBotManager {
     return this.getStatus();
   }
 
+  activateMasterAutoPilot() {
+    for (const symbol of Object.keys(this.bots)) {
+      const b = this.bots[symbol];
+      b.strategy = 'masterAutoPilot';
+      b.active = true;
+      b.aiFilterEnabled = true;
+      b.stopLossPct = 2.0;
+      b.takeProfitPct = symbol.includes('BTC') ? 5.0 : 4.0;
+    }
+    this.saveState();
+    this.broadcast({ type: 'MASTER_AUTOPILOT_ACTIVATED', mode: 'MASTER_AUTO_PILOT', bots: this.getStatus() });
+    return this.getStatus();
+  }
+
   stopAll() {
     for (const symbol of Object.keys(this.bots)) {
       this.bots[symbol].active = false;
@@ -179,6 +197,8 @@ class AutoBotManager {
       b.cash = b.initialCapital;
       b.position = 0;
       b.entryPrice = 0;
+      b.trailingLocked = false;
+      b.trailingLockPrice = 0;
       b.realizedPnL = 0;
       b.unrealizedPnL = 0;
       b.totalTrades = 0;
@@ -220,6 +240,8 @@ class AutoBotManager {
       winRatePct: Number(b.winRatePct.toFixed(1)),
       stopLossPct: b.stopLossPct,
       takeProfitPct: b.takeProfitPct,
+      trailingLocked: !!b.trailingLocked,
+      trailingLockPrice: Number((b.trailingLockPrice || 0).toFixed(2)),
       aiFilterEnabled: b.aiFilterEnabled,
       recentTrades: b.trades.slice(-5).reverse()
     };
@@ -253,19 +275,32 @@ class AutoBotManager {
     if (bot.position > 0 && bot.entryPrice > 0) {
       unrealizedPnL = (currentPrice - bot.entryPrice) * bot.position;
       pnlPct = ((currentPrice - bot.entryPrice) / bot.entryPrice) * 100;
-      stopLossPrice = bot.entryPrice * (1 - bot.stopLossPct / 100);
+
+      // Dynamic Trailing Profit Lock: If profit reaches +1.5%, trail stop-loss into guaranteed green profit (+0.5%)
+      if (pnlPct >= 1.5 && !bot.trailingLocked) {
+        bot.trailingLocked = true;
+        bot.trailingLockPrice = bot.entryPrice * 1.005;
+        bot.stopLossPct = -0.5; // Negative stop loss percentage locks in profit above entry
+      }
+
+      stopLossPrice = bot.trailingLocked ? bot.trailingLockPrice : bot.entryPrice * (1 - bot.stopLossPct / 100);
       takeProfitPrice = bot.entryPrice * (1 + bot.takeProfitPct / 100);
       bot.unrealizedPnL = unrealizedPnL;
     } else {
       bot.unrealizedPnL = 0;
+      bot.trailingLocked = false;
+      bot.trailingLockPrice = 0;
     }
 
     // 2. Classify Current Market Regime with AI
     const regimeInfo = RegimeFilter.analyze(candles, bot.strategy, 'BUY');
 
-    // 3. Emergency Guard 1: Hard Stop-Loss Trigger (-2%)
+    // 3. Emergency Guard 1: Hard Stop-Loss Trigger (-2% or Trailing Lock)
     if (bot.position > 0 && pnlPct <= -bot.stopLossPct) {
-      this.executeSell(bot, currentPrice, `🚨 HARD STOP-LOSS HIT (-${Math.abs(pnlPct).toFixed(2)}%) - Capital Protected`);
+      const exitReason = bot.trailingLocked
+        ? `🔒 TRAILING PROFIT LOCK EXECUTED (+${pnlPct.toFixed(2)}%) - Green Profit Secured`
+        : `🚨 HARD STOP-LOSS HIT (-${Math.abs(pnlPct).toFixed(2)}%) - Capital Protected`;
+      this.executeSell(bot, currentPrice, exitReason);
       return;
     }
 
@@ -321,6 +356,34 @@ class AutoBotManager {
       } else if (forecast.regime === 'BEARISH_BREAKDOWN' && forecast.expectedReturnPct <= -0.40) {
         signal = 'SELL';
         reason = `🔮 KRONOS_AI: Bearish Breakdown Trajectory (${forecast.expectedReturnPct}%)`;
+      }
+    } else if (bot.strategy === 'masterAutoPilot') {
+      // 🌟 1-Click Master Auto-Pilot (Adaptive Multi-Strategy Ensemble)
+      const KronosPredictor = require('../core/kronosPredictor');
+      const forecast = KronosPredictor.predict(candles, { horizon: 12 });
+      const i = closes.length - 1;
+      const bb = Indicators.bollingerBands(closes, 20, 2);
+      const rsi = Indicators.rsi(closes, 14);
+      const curRsi = rsi[i] || 50;
+
+      // Regime A: Bullish Expansion (AI + Trend Alignment)
+      if (forecast.regime === 'BULLISH_EXPANSION' && forecast.rankIC >= 0.20 && curRsi <= 68) {
+        signal = 'BUY';
+        reason = `🌟 MASTER AUTO-PILOT [AI Trend Momentum]: Forecast (+${forecast.expectedReturnPct}% / RankIC: +${forecast.rankIC}) + RSI(${curRsi.toFixed(1)})`;
+        bot.stopLossPct = 2.0;
+        bot.takeProfitPct = bot.symbol.includes('BTC') ? 5.0 : 4.0;
+      }
+      // Regime B: Oversold Range Reversion (Mean-Reversion Alignment)
+      else if (bb.lower[i] && closes[i - 1] <= bb.lower[i - 1] && closes[i] > bb.lower[i] && curRsi <= 45) {
+        signal = 'BUY';
+        reason = `🌟 MASTER AUTO-PILOT [Mean Reversion]: Rebounded from 2σ Lower Band (${bb.lower[i].toFixed(2)}) + RSI(${curRsi.toFixed(1)})`;
+        bot.stopLossPct = 2.0;
+        bot.takeProfitPct = 4.0;
+      }
+      // Regime C: Overbought Rejection or Bearish Breakdown
+      else if ((bb.upper[i] && closes[i - 1] >= bb.upper[i - 1] && closes[i] < bb.upper[i] && curRsi >= 68) || (forecast.regime === 'BEARISH_BREAKDOWN')) {
+        signal = 'SELL';
+        reason = `🌟 MASTER AUTO-PILOT [Profit Target / Exit]: Overbought Rejection (RSI ${curRsi.toFixed(1)}) or Bearish Regime`;
       }
     }
 
@@ -393,6 +456,7 @@ class AutoBotManager {
   }
 
   executeSell(bot, currentPrice, reason) {
+    if (!bot || bot.position <= 0) return null;
     const slippage = currentPrice * 0.0005;
     const fillPrice = currentPrice - slippage;
     const proceeds = bot.position * fillPrice;
@@ -429,6 +493,8 @@ class AutoBotManager {
     bot.position = 0;
     bot.entryPrice = 0;
     bot.unrealizedPnL = 0;
+    bot.trailingLocked = false;
+    bot.trailingLockPrice = 0;
 
     const emoji = tradePnL >= 0 ? '🟢 TAKE-PROFIT / EXIT' : '🔴 STOP-LOSS / EXIT';
     const alertMsg = `🤖 [${bot.name}] ${emoji}\n` +
@@ -478,19 +544,16 @@ class AutoBotManager {
     // Wait 2.5 seconds to simulate in-flight market movement
     await new Promise(resolve => setTimeout(resolve, 2500));
 
-    // 2. Execute Exit based on target outcome
-    let exitPrice = 0;
-    let exitReason = '';
-
-    if (targetOutcome === 'STOP_LOSS') {
-      exitPrice = bot.entryPrice * (1 - bot.stopLossPct / 100);
-      exitReason = `🚨 HARD STOP-LOSS HIT (-${bot.stopLossPct.toFixed(2)}%) - 2% Capital Guard Preserved`;
-    } else {
-      exitPrice = bot.entryPrice * (1 + bot.takeProfitPct / 100);
-      exitReason = `🎯 TAKE-PROFIT TARGET HIT (+${bot.takeProfitPct.toFixed(2)}%) - Asymmetric 1:2 Payoff Secured`;
+    if (bot.position > 0) {
+      if (targetOutcome === 'STOP_LOSS') {
+        exitPrice = bot.entryPrice * (1 - bot.stopLossPct / 100);
+        exitReason = `🚨 HARD STOP-LOSS HIT (-${bot.stopLossPct.toFixed(2)}%) - 2% Capital Guard Preserved`;
+      } else {
+        exitPrice = bot.entryPrice * (1 + bot.takeProfitPct / 100);
+        exitReason = `🎯 TAKE-PROFIT TARGET HIT (+${bot.takeProfitPct.toFixed(2)}%) - Asymmetric 1:2 Payoff Secured`;
+      }
+      this.executeSell(bot, exitPrice, exitReason);
     }
-
-    this.executeSell(bot, exitPrice, exitReason);
     const sellTrade = bot.trades[bot.trades.length - 1];
 
     return {

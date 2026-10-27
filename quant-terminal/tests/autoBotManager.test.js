@@ -101,5 +101,41 @@ test('AutoBotManager Suite', async (t) => {
     assert.strictEqual(manager.bots['BTC-USD'].strategy, 'kronosAlpha', 'Bot strategy updated to kronosAlpha');
     assert.strictEqual(manager.bots['BTC-USD'].params.horizon, 12, 'Param horizon updated');
   });
+
+  await t.test('1-Click Master Auto-Pilot activates across all assets with strict risk shields', () => {
+    const manager = new AutoBotManager();
+    const bots = manager.activateMasterAutoPilot();
+
+    assert.strictEqual(bots['XAU-USD'].strategy, 'masterAutoPilot');
+    assert.strictEqual(bots['BTC-USD'].strategy, 'masterAutoPilot');
+    assert.strictEqual(bots['XAU-USD'].active, true);
+    assert.strictEqual(bots['BTC-USD'].active, true);
+    assert.strictEqual(bots['XAU-USD'].aiFilterEnabled, true);
+    assert.strictEqual(bots['XAU-USD'].stopLossPct, 2.0);
+  });
+
+  await t.test('Dynamic trailing profit lock engages when unrealized profit reaches +1.5%', () => {
+    const manager = new AutoBotManager();
+    manager.reset('XAU-USD');
+    manager.activateMasterAutoPilot();
+    const bot = manager.bots['XAU-USD'];
+
+    // Simulate entry at $2700
+    bot.position = 1.0;
+    bot.entryPrice = 2700.00;
+    bot.cash = 0;
+    assert.strictEqual(bot.trailingLocked, false);
+
+    // Price moves to $2745 (+1.67% profit)
+    const candles = Array.from({ length: 30 }, () => ({
+      open: 2740, high: 2750, low: 2735, close: 2745, volume: 100
+    }));
+
+    manager.onTick('XAU-USD', 2745.00, candles);
+
+    assert.strictEqual(bot.trailingLocked, true, 'Trailing lock must engage at +1.5% profit');
+    assert.ok(bot.trailingLockPrice > bot.entryPrice, 'Trailing lock price must be above entry price');
+  });
 });
+
 

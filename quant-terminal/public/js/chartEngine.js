@@ -441,13 +441,54 @@ class ChartEngine {
   }
 
   drawActiveBracketLines(ctx, plotW, getY) {
-    const { entryPrice, stopLossPrice, takeProfitPrice, side = 'BUY' } = this.activeBracket;
+    if (!this.activeBracket) return;
+    const { entryPrice, stopLossPrice, takeProfitPrice, side = 'BUY', units, allocatedCapital } = this.activeBracket;
+    if (!entryPrice) return;
 
     ctx.save();
+
+    // 0. Floating P&L Shading between Entry Price and Current Live Price (TradingView App style)
+    if (this.candles && this.candles.length > 0) {
+      const currentPrice = this.candles[this.candles.length - 1].close;
+      const enY = getY(entryPrice);
+      const curY = getY(currentPrice);
+      const isProfit = (side === 'BUY' && currentPrice >= entryPrice) || (side === 'SELL' && currentPrice <= entryPrice);
+      const shadeColor = isProfit ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)';
+
+      ctx.fillStyle = shadeColor;
+      ctx.fillRect(0, Math.min(enY, curY), plotW, Math.max(2, Math.abs(curY - enY)));
+
+      // Floating P&L Badge following live candle tip
+      const pnlAmount = units ? (side === 'BUY' ? (currentPrice - entryPrice) * units : (entryPrice - currentPrice) * units) : 0;
+      const pnlPct = ((currentPrice - entryPrice) / entryPrice) * 100 * (side === 'BUY' ? 1 : -1);
+      const pnlSign = pnlPct >= 0 ? '+' : '';
+
+      const badgeW = 165;
+      const badgeH = 22;
+      const badgeX = Math.max(10, plotW - badgeW - 12);
+      const badgeY = Math.max(8, Math.min(this.mainHeight - 35, curY - 11));
+
+      ctx.fillStyle = 'rgba(8, 12, 22, 0.94)';
+      ctx.strokeStyle = isProfit ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+      else ctx.rect(badgeX, badgeY, badgeW, badgeH);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = isProfit ? '#34d399' : '#f87171';
+      ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+      const text = units 
+        ? `PnL: ${pnlSign}$${pnlAmount.toFixed(2)} (${pnlSign}${pnlPct.toFixed(2)}%)`
+        : `PnL: ${pnlSign}${pnlPct.toFixed(2)}%`;
+      ctx.fillText(text, badgeX + 8, badgeY + 15);
+    }
+
     // 1. Take-Profit Target Line (Green)
     if (takeProfitPrice) {
       const tpY = getY(takeProfitPrice);
-      ctx.strokeStyle = 'rgba(0, 245, 155, 0.85)';
+      ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 1.2;
       ctx.setLineDash([6, 3]);
       ctx.beginPath();
@@ -456,17 +497,25 @@ class ChartEngine {
       ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(0, 245, 155, 0.9)';
-      ctx.fillRect(10, tpY - 9, 140, 18);
-      ctx.fillStyle = '#040812';
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.95)';
+      const tpText = `🎯 TAKE-PROFIT: $${takeProfitPrice.toFixed(2)} (+4.0%)`;
       ctx.font = 'bold 9px "JetBrains Mono", monospace';
-      ctx.fillText(`🎯 TP: $${takeProfitPrice.toFixed(2)} (+4.0%)`, 16, tpY + 3.5);
+      const textW = ctx.measureText(tpText).width;
+      ctx.fillRect(8, tpY - 9, textW + 14, 18);
+      ctx.fillStyle = '#040812';
+      ctx.fillText(tpText, 14, tpY + 3.5);
+
+      // Right price axis tag
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(plotW + 2, tpY - 9, this.paddingRight - 4, 18);
+      ctx.fillStyle = '#040812';
+      ctx.fillText(takeProfitPrice.toFixed(2), plotW + 6, tpY + 3.5);
     }
 
     // 2. Stop-Loss Line (Red)
     if (stopLossPrice) {
       const slY = getY(stopLossPrice);
-      ctx.strokeStyle = 'rgba(255, 51, 102, 0.85)';
+      ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 1.2;
       ctx.setLineDash([6, 3]);
       ctx.beginPath();
@@ -475,30 +524,46 @@ class ChartEngine {
       ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(255, 51, 102, 0.9)';
-      ctx.fillRect(10, slY - 9, 140, 18);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.95)';
+      const slText = `🛡️ STOP-LOSS: $${stopLossPrice.toFixed(2)} (-2.0%)`;
       ctx.font = 'bold 9px "JetBrains Mono", monospace';
-      ctx.fillText(`🛡️ SL: $${stopLossPrice.toFixed(2)} (-2.0%)`, 16, slY + 3.5);
+      const textW = ctx.measureText(slText).width;
+      ctx.fillRect(8, slY - 9, textW + 14, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(slText, 14, slY + 3.5);
+
+      // Right price axis tag
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(plotW + 2, slY - 9, this.paddingRight - 4, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(stopLossPrice.toFixed(2), plotW + 6, slY + 3.5);
     }
 
-    // 3. Entry Price Line (Cyan)
+    // 3. Entry Price Line (Cyan / Green) — EXACTLY WHERE WE BOUGHT
     if (entryPrice) {
       const enY = getY(entryPrice);
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.8)';
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
       ctx.beginPath();
       ctx.moveTo(0, enY);
       ctx.lineTo(plotW, enY);
       ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(0, 240, 255, 0.85)';
-      ctx.fillRect(10, enY - 9, 125, 18);
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.95)';
+      const enText = `⚡ BOUGHT @ $${entryPrice.toFixed(2)}${units ? ` | Qty: ${units}` : ''}`;
+      ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+      const textW = ctx.measureText(enText).width;
+      ctx.fillRect(8, enY - 9, textW + 14, 18);
       ctx.fillStyle = '#040812';
-      ctx.font = 'bold 9px "JetBrains Mono", monospace';
-      ctx.fillText(`⚡ ENTRY: $${entryPrice.toFixed(2)}`, 16, enY + 3.5);
+      ctx.fillText(enText, 14, enY + 3.5);
+
+      // Right price axis tag
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(plotW + 2, enY - 9, this.paddingRight - 4, 18);
+      ctx.fillStyle = '#040812';
+      ctx.fillText(entryPrice.toFixed(2), plotW + 6, enY + 3.5);
     }
 
     ctx.restore();
@@ -534,37 +599,80 @@ class ChartEngine {
   drawTradeMarkers(ctx, visibleCandles, startIndex, getY, getX) {
     if (!this.trades || this.trades.length === 0) return;
 
+    ctx.save();
     for (const trade of this.trades) {
+      const entryT = trade.entryTime || trade.timestamp;
+      const exitT = trade.exitTime;
+      const isSellOnly = trade.action && trade.action.includes('SELL');
+
       for (let i = 0; i < visibleCandles.length; i++) {
         const c = visibleCandles[i];
-        
-        // Buy Marker
-        if (c.timestamp === trade.entryTime) {
+        const nextC = visibleCandles[i + 1];
+        const inThisCandle = nextC 
+          ? (entryT >= c.timestamp && entryT < nextC.timestamp)
+          : (entryT >= c.timestamp - 900000);
+
+        // Buy Marker (Exact Entry Arrow + Price Tag)
+        if (inThisCandle && !isSellOnly && (trade.entryPrice || trade.price)) {
+          const buyPrice = trade.entryPrice || trade.price;
           const cx = getX(i);
-          const cy = getY(trade.entryPrice) + 14;
-          ctx.fillStyle = '#00f59b';
+          const cy = getY(buyPrice) + 10;
+
+          ctx.fillStyle = '#10b981';
           ctx.beginPath();
           ctx.moveTo(cx, cy);
-          ctx.lineTo(cx - 5, cy + 9);
-          ctx.lineTo(cx + 5, cy + 9);
+          ctx.lineTo(cx - 6, cy + 8);
+          ctx.lineTo(cx + 6, cy + 8);
           ctx.closePath();
           ctx.fill();
+
+          // Text pill: ▲ BUY $2,685.20
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.95)';
+          const text = `▲ BUY $${buyPrice.toFixed(2)}`;
+          ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+          const tw = ctx.measureText(text).width;
+          ctx.fillRect(cx - (tw / 2) - 4, cy + 9, tw + 8, 14);
+          ctx.fillStyle = '#040812';
+          ctx.fillText(text, cx - (tw / 2), cy + 19);
         }
 
-        // Sell Marker
-        if (c.timestamp === trade.exitTime) {
-          const cx = getX(i);
-          const cy = getY(trade.exitPrice) - 14;
-          ctx.fillStyle = trade.netPnL >= 0 ? '#00f59b' : '#ff3366';
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx - 5, cy - 9);
-          ctx.lineTo(cx + 5, cy - 9);
-          ctx.closePath();
-          ctx.fill();
+        // Sell Marker (Exit Arrow + PnL Tag)
+        if ((exitT && trade.exitPrice) || (isSellOnly && (trade.exitPrice || trade.price))) {
+          const sellT = exitT || entryT;
+          const sellPrice = trade.exitPrice || trade.price;
+          const exitInCandle = nextC 
+            ? (sellT >= c.timestamp && sellT < nextC.timestamp)
+            : (sellT >= c.timestamp - 900000);
+
+          if (exitInCandle) {
+            const cx = getX(i);
+            const cy = getY(sellPrice) - 10;
+            const pnlVal = (trade.netPnL !== undefined ? trade.netPnL : trade.pnl);
+            const isWin = pnlVal !== undefined ? pnlVal >= 0 : true;
+
+            ctx.fillStyle = isWin ? '#10b981' : '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx - 6, cy - 8);
+            ctx.lineTo(cx + 6, cy - 8);
+            ctx.closePath();
+            ctx.fill();
+
+            // Text pill: ▼ SELL $... (+$...)
+            ctx.fillStyle = isWin ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)';
+            const text = (pnlVal !== undefined)
+              ? `▼ SELL $${sellPrice.toFixed(2)} (${pnlVal >= 0 ? '+' : ''}$${Number(pnlVal).toFixed(2)})`
+              : `▼ SELL $${sellPrice.toFixed(2)}`;
+            ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+            const tw = ctx.measureText(text).width;
+            ctx.fillRect(cx - (tw / 2) - 4, cy - 24, tw + 8, 14);
+            ctx.fillStyle = isWin ? '#040812' : '#ffffff';
+            ctx.fillText(text, cx - (tw / 2), cy - 14);
+          }
         }
       }
     }
+    ctx.restore();
   }
 
   drawMainGrid(ctx, plotW, plotH, minPrice, maxPrice, visibleCandles) {
