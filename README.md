@@ -11,7 +11,7 @@ This unified monorepo integrates distributed systems infrastructure, financial q
 | Subsystem | Directory | Port | Description |
 | :--- | :--- | :--- | :--- |
 | **SysLab ArchitectOS** | Root (`./`) | `:3000` | Distributed systems workbench (Object Storage, Redis Backplane, Floci Cloud, SQS). |
-| **AlphaForge Quant Terminal** | `quant-terminal/` | `:4000` | Institutional algorithmic trading desk (Spot Gold `XAU/USD`, Forex, Crypto, Capital.com & Binance gateways). |
+| **AlphaForge Quant Terminal** | `quant-terminal/` | `:4000` | Institutional algorithmic trading desk (Spot Gold `XAU/USD`, Forex, Crypto, ATFX Cambodia local ABA/Bakong & Binance gateways). See [Cambodia Broker Guide](quant-terminal/CAMBODIA_BROKER_GUIDE.md). |
 | **Kubernetes Orchestration** | `k8s/` | Ingress / Cluster | Full production manifests (Deployments, Services, HPA, Ingress, Kustomize). |
 
 ---

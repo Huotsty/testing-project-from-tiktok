@@ -60,7 +60,8 @@ Double-click:
 Click **`⚡ ACTIVATE 1-CLICK AUTO-PILOT (DO EVERYTHING FOR ME)`** to engage the multi-regime AI ensemble across Gold and Bitcoin with zero manual intervention.
 
 📖 **Exhaustive System Documentation:**
-* 📘 **[Live Deposit & Laptop Setup Guide ($15 Micro-Sandbox)](LIVE_DEPOSIT_AND_SETUP_GUIDE.md)** *(Start Here for Live Funds)*
+* 🇰🇭 **[Local Cambodia Broker Guide: ATFX vs ST Market (Gold & BTC)](CAMBODIA_BROKER_GUIDE.md)** *(Start Here for Local ABA/Bakong Trading)*
+* 📘 **[Live Deposit & Laptop Setup Guide ($15 Micro-Sandbox)](LIVE_DEPOSIT_AND_SETUP_GUIDE.md)**
 * 🏛️ [Distributed Architecture & Scalability Manual](ARCHITECTURE.md)
 * 📘 [Institutional Whitepaper & Platform Guide](DOCUMENTATION.md)
 * 🛡️ [Software Engineering Standards](SOFTWARE_ENGINEERING_STANDARDS.md)
@@ -210,7 +211,51 @@ start_terminal.bat
 npm start
 ```
 
-Open your browser to: **[http://localhost:4000](http://localhost:4000)**
+---
+
+## 🇰🇭 Local Cambodia Broker Integration (ATFX vs. ST Market)
+
+If you want to trade international assets (**Spot Gold `XAU/USD`**, **Bitcoin `BTC/USD`**, and **US Equities / Indices**) while keeping your funds domestic in Cambodia (depositing/withdrawing via **ABA Bank** or **Bakong** in USD), refer to the complete manual: **[`CAMBODIA_BROKER_GUIDE.md`](CAMBODIA_BROKER_GUIDE.md)**.
+
+### 1. Broker Comparison Summary
+* **ATFX Cambodia (`atfx.com.kh`, SERC License 040):** 
+  * ✅ **MetaTrader 4 (MT4) & MetaTrader 5 (MT5)** support.
+  * ✅ **Full automated bot support** (Expert Advisors, MT5 Python bridge, or Webhooks).
+  * ✅ **Direct local deposit & withdrawal via ABA Bank & Bakong** in USD.
+  * 📍 Office: AMASS Central Tower, Floor 24, BKK 1, Phnom Penh (+855 17 500 048 / `cs@atfx.com.kh`).
+* **ST Market Cambodia (`stmarket.com.kh`, SERC License 021):**
+  * ❌ Uses proprietary **EZQT** app.
+  * ❌ **No public API / No bot support** for retail traders (manual trading only).
+* **Cambodia Securities Exchange (CSX):**
+  * Domestic Cambodian equities only (`ABC`, `PWSA`, `PAS`) via CSX MTS app. No open bot API.
+
+### 2. What is ATFX FIX API (`https://www.atfx.com.kh/en/atfx-fix-api`)?
+* **FIX (Financial Information eXchange)** protocol is an institutional-grade direct socket connection (< 5 ms latency in London Equinix LD4).
+* It is aimed at proprietary quant funds and requires manual approval + high capital ($5,000 to $25,000+).
+* **Recommendation:** Use standard **MT5 Demo / Live account** for running your bot. It is free, instant, and has zero minimum capital hurdles.
+
+### 3. Spot Gold & BTC Margin Rules (SERC Leverage 1:100)
+* **Gold (XAU/USD):** 1 standard lot = 100 oz. Minimum 0.01 micro-lot = 1 oz.
+  * With 1:100 leverage (1% margin), 0.01 lot Gold requires **~$27.00 margin**.
+  * Keep at least **$50 to $100** in your account to avoid margin stop-outs.
+* **Bitcoin (BTC/USD):** 24/7 trading. Requires ~$70 margin for 0.01 BTC at 1:10 leverage.
+
+### 4. Running & Testing on Your Other Laptop (Checklist)
+1. **Clone repo & install dependencies:**
+   ```powershell
+   git clone https://github.com/Huotsty/alphaforge-quant-terminal.git
+   cd quant-terminal
+   npm install
+   npm test
+   ```
+2. **Install MetaTrader 5 (MT5):** Download from [metatrader5.com](https://www.metatrader5.com).
+3. **Open an ATFX Demo Account inside MT5:**
+   * Go to `File` -> `Open an Account` -> search `ATFX` -> Select `ATFX-Demo`.
+   * Set virtual balance to $1,000 or $5,000 with 1:100 leverage (instant, no website forms).
+4. **Bridge Bot to MT5:**
+   * Install Python library: `pip install MetaTrader5`.
+   * Use `MetaTrader5` package to receive signals from AlphaForge and execute orders on your MT5 terminal.
+5. **Funding Live:** When ready, deposit locally using ABA Bank / Bakong via the [ATFX Client Portal](https://login-kh.atfx.com/login).
 
 ---
 
